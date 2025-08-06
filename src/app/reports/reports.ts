@@ -95,8 +95,19 @@ export class Reports implements OnInit {
       const score = `${totalPoints}-??`;
       const finalRows = rows.map(r => r.replace(/,""$/, `,"${score}"`));
       const csv = [headers.join(","), ...finalRows].join("\n");
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      saveAs(blob, `game_${this.selectedGameId}_players.csv`);
+      this.downloadCSV(csv, `game_${this.selectedGameId}_players.csv`);
     }
+
+  private downloadCSV(content: string, filename: string) {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
     
 }
