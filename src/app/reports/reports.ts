@@ -1,6 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Firestore, collection, getDocs, CollectionReference, DocumentData } from '@angular/fire/firestore';
-import { saveAs } from 'file-saver';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 

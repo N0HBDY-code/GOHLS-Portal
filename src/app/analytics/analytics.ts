@@ -12,7 +12,6 @@ import {
 } from '@angular/fire/firestore';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { saveAs } from 'file-saver';
 import { Auths } from '../auth-service/auth-service';
 
 interface Team {
