@@ -1,0 +1,620 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <!-- Season Management System -->
+      <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-trophy me-2"></i>Season Management System
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                  <h6 class="mb-0">Current League Season</h6>
+                </div>
+                <div class="card-body text-center">
+                  <h2 class="display-4 text-primary mb-2">{{ currentLeagueSeason }}</h2>
+                  <p class="text-muted mb-0">Active Season</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                  <h6 class="mb-0">Draft Class System</h6>
+                </div>
+                <div class="card-body">
+                  <div class="mb-2">
+                    <strong>18-year-olds:</strong> 
+                    <span class="badge bg-success ms-1">{{ draftClassCounts.age18 }}</span>
+                  </div>
+                  <div class="mb-2">
+                    <strong>19-year-olds:</strong> 
+                    <span class="badge bg-info ms-1">{{ draftClassCounts.age19 }}</span>
+                  </div>
+                  <div class="mb-2">
+                    <strong>20+ years:</strong> 
+                    <span class="badge bg-secondary ms-1">{{ draftClassCounts.age20Plus }}</span>
+                  </div>
+                  <hr>
+                  <div>
+                    <strong>Total Active Players:</strong> 
+                    <span class="badge bg-primary ms-1">{{ draftClassCounts.total }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                  <h6 class="mb-0">Season Rollover</h6>
+                </div>
+                <div class="card-body">
+                  <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This will age all players by 1 year and advance the league season.
+                  </div>
+                  <button class="btn btn-danger w-100" 
+                          (click)="showSeasonRolloverModal = true"
+                          [disabled]="seasonRolloverInProgress">
+                    <i class="fas fa-forward me-2"></i>
+                    {{ seasonRolloverInProgress ? 'Processing...' : 'Advance to Season ' + (currentLeagueSeason + 1) }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Season History -->
+          <div class="mt-4">
+            <h6>
+              <i class="fas fa-history me-2"></i>Season History
+            </h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Season</th>
+                    <th>Start Date</th>
+                    <th>Players at Start</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let season of seasonHistory">
+                    <td>
+                      <span class="badge" 
+                            [class.bg-success]="season.season === currentLeagueSeason"
+                            [class.bg-secondary]="season.season !== currentLeagueSeason">
+                        Season {{ season.season }}
+                      </span>
+                    </td>
+                    <td>{{ season.startDate?.toDate?.() | date:'mediumDate' }}</td>
+                    <td>{{ season.playerCount || 0 }}</td>
+                    <td>
+                      <span class="badge" 
+                            [class.bg-success]="season.season === currentLeagueSeason"
+                            [class.bg-secondary]="season.season !== currentLeagueSeason">
+                        {{ season.season === currentLeagueSeason ? 'Active' : 'Completed' }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Schedule Settings -->
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-calendar-alt me-2"></i>Game Schedule Settings
+          </h4>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3">
+              <label for="currentSeason" class="form-label">Current Season</label>
+              <input type="number" 
+                     id="currentSeason"
+                     class="form-control" 
+                     [(ngModel)]="currentSeason"
+                     (change)="updateScheduleSettings()"
+                     min="1">
+            </div>
+            <div class="col-md-3">
+              <label for="currentWeek" class="form-label">Current Week</label>
+              <input type="number" 
+                     id="currentWeek"
+                     class="form-control" 
+                     [(ngModel)]="currentWeek"
+                     (change)="updateScheduleSettings()"
+                     min="1">
+            </div>
+            <div class="col-md-3">
+              <label for="currentDay" class="form-label">Current Day</label>
+              <select id="currentDay" 
+                      class="form-select" 
+                      [(ngModel)]="currentDay"
+                      (change)="updateScheduleSettings()">
+                <option value="D1">Day 1</option>
+                <option value="D2">Day 2</option>
+                <option value="D3">Day 3</option>
+                <option value="D4">Day 4</option>
+                <option value="D5">Day 5</option>
+                <option value="D6">Day 6</option>
+                <option value="D7">Day 7</option>
+              </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button class="btn btn-success w-100" 
+                      (click)="updateScheduleSettings()"
+                      [disabled]="loading">
+                <i class="fas fa-save me-1"></i>Update Schedule
+              </button>
+            </div>
+          </div>
+          <div class="mt-3">
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              These settings control what games appear on the dashboard and affect the current season display throughout the application.
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player Approval Section -->
+      <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+          <h4 class="mb-0">
+            <i class="fas fa-user-check me-2"></i>Player Approval System
+          </h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loadingPendingPlayers" class="text-center">
+            <div class="spinner-border text-info"></div>
+            <p>Loading pending players...</p>
+          </div>
+
+          <div *ngIf="!loadingPendingPlayers && pendingPlayers.length === 0" class="text-center text-muted">
+            <i class="fas fa-check-circle fa-3x mb-3"></i>
+            <p>No players awaiting approval</p>
+          </div>
+
+          <div *ngFor="let player of pendingPlayers" class="card mb-3 border-info">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-md-4">
+                  <h5 class="mb-1">{{ player.firstName }} {{ player.lastName }}</h5>
+                  <p class="text-muted mb-1">{{ player.position }} • {{ player.archetype }}</p>
+                  <small class="text-muted">Submitted: {{ player.submittedDate?.toDate?.() | date:'medium' }}</small>
+                  <div class="mt-1">
+                    <small class="text-muted">By: {{ player.userDisplayName || player.userEmail }}</small>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="row text-center">
+                    <div class="col-4">
+                      <small class="text-muted">Age</small>
+                      <div class="fw-bold">{{ player.age }}</div>
+                    </div>
+                    <div class="col-4">
+                      <small class="text-muted">Height</small>
+                      <div class="fw-bold">{{ player.height }}"</div>
+                    </div>
+                    <div class="col-4">
+                      <small class="text-muted">Weight</small>
+                      <div class="fw-bold">{{ player.weight }}</div>
+                    </div>
+                  </div>
+                  <div class="mt-2 text-center">
+                    <span class="badge bg-info">Draft Class: Season {{ player.draftClass || currentLeagueSeason }}</span>
+                  </div>
+                </div>
+                <div class="col-md-5 text-end">
+                  <div class="btn-group">
+                    <button class="btn btn-success" 
+                            (click)="approvePlayer(player)"
+                            [disabled]="loading">
+                      <i class="fas fa-check me-1"></i>Approve
+                    </button>
+                    <button class="btn btn-danger" 
+                            (click)="rejectPlayer(player)"
+                            [disabled]="loading">
+                      <i class="fas fa-times me-1"></i>Reject
+                    </button>
+                    <button class="btn btn-outline-secondary" 
+                            (click)="editPlayer(player)"
+                            [disabled]="loading">
+                      <i class="fas fa-edit me-1"></i>Edit
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Players Section -->
+      <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+          <h4 class="mb-0">
+            <i class="fas fa-user-plus me-2"></i>New Players Awaiting Assignment
+            <span class="badge bg-dark ms-2">{{ newPlayers.length }}</span>
+          </h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loadingNewPlayers" class="text-center">
+            <div class="spinner-border text-warning"></div>
+            <p>Loading new players...</p>
+          </div>
+
+          <div *ngIf="!loadingNewPlayers && newPlayers.length === 0" class="text-center text-muted">
+            <i class="fas fa-check-circle fa-3x mb-3"></i>
+            <p>No new players awaiting assignment</p>
+          </div>
+
+          <div *ngFor="let player of newPlayers" class="card mb-3 border-warning">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-md-4">
+                  <h5 class="mb-1">{{ player.firstName }} {{ player.lastName }}</h5>
+                  <p class="text-muted mb-1">{{ player.position }} • {{ player.archetype }}</p>
+                  <small class="text-muted">Created: {{ player.createdDate?.toDate?.() | date:'medium' }}</small>
+                </div>
+                <div class="col-md-3">
+                  <div class="row text-center">
+                    <div class="col-4">
+                      <small class="text-muted">Age</small>
+                      <div class="fw-bold">{{ player.age }}</div>
+                    </div>
+                    <div class="col-4">
+                      <small class="text-muted">Height</small>
+                      <div class="fw-bold">{{ player.height }}"</div>
+                    </div>
+                    <div class="col-4">
+                      <small class="text-muted">Weight</small>
+                      <div class="fw-bold">{{ player.weight }}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <select class="form-select" [(ngModel)]="player.selectedTeamId">
+                    <option value="">Select Team</option>
+                    <optgroup label="Major League">
+                      <option *ngFor="let team of majorLeagueTeams" [value]="team.id">
+                        {{ team.name }}
+                      </option>
+                    </optgroup>
+                    <optgroup label="Minor League">
+                      <option *ngFor="let team of minorLeagueTeams" [value]="team.id">
+                        {{ team.name }}
+                      </option>
+                    </optgroup>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <button class="btn btn-success w-100" 
+                          (click)="assignPlayerToTeam(player)"
+                          [disabled]="!player.selectedTeamId || loading">
+                    <i class="fas fa-check me-1"></i>Assign
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Role Management Card -->
+      <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Role Management</h4>
+        </div>
+        <div class="card-body">
+          <!-- Search Form -->
+          <div class="input-group mb-3">
+            <input 
+              type="text" 
+              class="form-control" 
+              [(ngModel)]="searchUsername" 
+              placeholder="Enter username"
+              [disabled]="loading"
+            >
+            <button 
+              class="btn btn-primary" 
+              (click)="searchUser()"
+              [disabled]="loading"
+            >
+              <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+              Search
+            </button>
+          </div>
+
+          <!-- Error/Success Messages -->
+          <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+          <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+
+          <!-- User Details -->
+          <div *ngIf="selectedUser" class="card mt-3">
+            <div class="card-body">
+              <h6>User: {{ selectedUser.displayName }}</h6>
+              <p class="text-muted mb-3">Email: {{ selectedUser.email }}</p>
+
+              <!-- Current Roles -->
+              <div class="mb-3">
+                <strong>Current Roles:</strong>
+                <div class="mt-2">
+                  <span *ngFor="let role of selectedUser.roles" 
+                        class="badge bg-secondary me-2 mb-2">
+                    {{ role }}
+                    <button class="btn btn-sm text-white ms-1" 
+                            (click)="removeRole(role)"
+                            [disabled]="loading">
+                      ×
+                    </button>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Add Role -->
+              <div class="mt-3">
+                <div class="input-group">
+                  <select class="form-select" [(ngModel)]="selectedRole" [disabled]="loading">
+                    <option value="">Select role to add...</option>
+                    <option *ngFor="let role of availableRoles" 
+                            [value]="role"
+                            [disabled]="selectedUser.roles.includes(role)">
+                      {{ role }}
+                    </option>
+                  </select>
+                  <button class="btn btn-success" 
+                          (click)="addRole()"
+                          [disabled]="!selectedRole || loading">
+                    Add Role
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trade Approval Card -->
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h4 class="mb-0">Trade Approvals</h4>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loadingTrades" class="text-center">
+            <div class="spinner-border text-primary"></div>
+            <p>Loading trades...</p>
+          </div>
+
+          <div *ngIf="!loadingTrades && pendingTrades.length === 0" class="text-center text-muted">
+            No trades pending approval
+          </div>
+
+          <div *ngFor="let trade of pendingTrades" class="card mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Trade Proposal</h5>
+              
+              <div class="row">
+                <div class="col-md-6">
+                  <h6>{{ getTeamName(trade.fromTeamId) }} offers:</h6>
+                  <ul class="list-unstyled">
+                    <li *ngFor="let playerId of trade.playersOffered">
+                      {{ getPlayerName(playerId) }}
+                    </li>
+                  </ul>
+                </div>
+                
+                <div class="col-md-6">
+                  <h6>{{ getTeamName(trade.toTeamId) }} offers:</h6>
+                  <ul class="list-unstyled">
+                    <li *ngFor="let playerId of trade.playersRequested">
+                      {{ getPlayerName(playerId) }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mt-3 d-flex gap-2">
+                <button class="btn btn-success" 
+                        (click)="approveTrade(trade)"
+                        [disabled]="loading">
+                  Approve Trade
+                </button>
+                <button class="btn btn-danger" 
+                        (click)="denyTrade(trade)"
+                        [disabled]="loading">
+                  Deny Trade
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Season Rollover Confirmation Modal -->
+<div class="modal fade show" 
+     *ngIf="showSeasonRolloverModal" 
+     tabindex="-1" 
+     style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>Season Rollover Confirmation
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showSeasonRolloverModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <h5><i class="fas fa-warning me-2"></i>Critical Action Warning</h5>
+          <p class="mb-0">
+            <strong>This action cannot be undone!</strong> You are about to advance the league from 
+            <strong>Season {{ currentLeagueSeason }}</strong> to <strong>Season {{ currentLeagueSeason + 1 }}</strong>.
+          </p>
+        </div>
+
+        <h6>What will happen during season rollover:</h6>
+        <ul class="list-group list-group-flush mb-3">
+          <li class="list-group-item">
+            <i class="fas fa-birthday-cake text-primary me-2"></i>
+            <strong>All {{ draftClassCounts.total }} active players will age by 1 year</strong>
+          </li>
+          <li class="list-group-item">
+            <i class="fas fa-users text-info me-2"></i>
+            <strong>{{ draftClassCounts.age18 }} players will move from 18 to 19 years old</strong>
+          </li>
+          <li class="list-group-item">
+            <i class="fas fa-graduation-cap text-success me-2"></i>
+            <strong>{{ draftClassCounts.age19 }} players will move from 19 to 20+ years old</strong>
+          </li>
+          <li class="list-group-item">
+            <i class="fas fa-trophy text-warning me-2"></i>
+            <strong>League season will advance to Season {{ currentLeagueSeason + 1 }}</strong>
+          </li>
+          <li class="list-group-item">
+            <i class="fas fa-history text-secondary me-2"></i>
+            <strong>Season history will be recorded for future reference</strong>
+          </li>
+        </ul>
+
+        <div class="alert alert-info">
+          <h6><i class="fas fa-info-circle me-2"></i>Draft Class Impact</h6>
+          <p class="mb-2">
+            Player ages are important for the draft class system. After rollover:
+          </p>
+          <ul class="mb-0">
+            <li><strong>18-year-olds:</strong> Youngest draft class, highest potential</li>
+            <li><strong>19-year-olds:</strong> Standard draft class</li>
+            <li><strong>20+ years:</strong> Veteran players, established in the league</li>
+          </ul>
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="confirmRollover" [(ngModel)]="rolloverConfirmed">
+          <label class="form-check-label" for="confirmRollover">
+            <strong>I understand this action cannot be undone and will affect all {{ draftClassCounts.total }} players in the league</strong>
+          </label>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">
+            <strong>Type "ADVANCE SEASON" to confirm:</strong>
+          </label>
+          <input type="text" 
+                 class="form-control" 
+                 [(ngModel)]="rolloverConfirmationText" 
+                 placeholder="Type ADVANCE SEASON to confirm">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showSeasonRolloverModal = false">Cancel</button>
+        <button type="button" 
+                class="btn btn-danger" 
+                (click)="executeSeasonRollover()"
+                [disabled]="!rolloverConfirmed || rolloverConfirmationText !== 'ADVANCE SEASON' || seasonRolloverInProgress">
+          <span *ngIf="seasonRolloverInProgress" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!seasonRolloverInProgress" class="fas fa-forward me-1"></i>
+          {{ seasonRolloverInProgress ? 'Processing Season Rollover...' : 'Advance to Season ' + (currentLeagueSeason + 1) }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Player Edit Modal -->
+<div class="modal fade show" 
+     *ngIf="showEditPlayerModal" 
+     tabindex="-1" 
+     style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-edit me-2"></i>Edit Player
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showEditPlayerModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="editingPlayer" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-control" [(ngModel)]="editingPlayer.firstName">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-control" [(ngModel)]="editingPlayer.lastName">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Position</label>
+            <select class="form-select" [(ngModel)]="editingPlayer.position" (change)="onEditPositionChange()">
+              <option value="LW">Left Wing</option>
+              <option value="C">Center</option>
+              <option value="RW">Right Wing</option>
+              <option value="D">Defense</option>
+              <option value="G">Goalie</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Archetype</label>
+            <select class="form-select" [(ngModel)]="editingPlayer.archetype">
+              <option *ngFor="let type of editArchetypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Age</label>
+            <input type="number" class="form-control" [(ngModel)]="editingPlayer.age" min="18" max="40">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Jersey Number</label>
+            <input type="number" class="form-control" [(ngModel)]="editingPlayer.jerseyNumber" min="0" max="99">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Height (inches)</label>
+            <input type="number" class="form-control" [(ngModel)]="editingPlayer.height" min="67" max="81">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Weight (lbs)</label>
+            <input type="number" class="form-control" [(ngModel)]="editingPlayer.weight" min="129" max="290">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Draft Class Season</label>
+            <input type="number" class="form-control" [(ngModel)]="editingPlayer.draftClass" min="1">
+            <small class="form-text text-muted">
+              This determines which draft class the player will be part of.
+            </small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Handedness</label>
+            <select class="form-select" [(ngModel)]="editingPlayer.handedness">
+              <option value="Left">Left</option>
+              <option value="Right">Right</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showEditPlayerModal = false">Cancel</button>
+        <button type="button" 
+                class="btn btn-primary" 
+                (click)="savePlayerEdit()"
+                [disabled]="loading">
+          <i class="fas fa-save me-1"></i>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

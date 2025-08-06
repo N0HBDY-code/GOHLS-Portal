@@ -1,0 +1,156 @@
+<div *ngIf="loading" class="loading-container">
+  <div class="spinner-border" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <p class="mt-2 text-muted">Checking player status...</p>
+</div>
+
+<!-- Show retired player message with option to create new -->
+<div *ngIf="!loading && hasRetiredPlayer && !showCreateForm" class="container mt-4">
+  <div class="alert alert-info text-center">
+    <h4><i class="fas fa-medal me-2"></i>{{ retiredPlayerName }} Has Retired</h4>
+    <p class="mb-3">Your player has retired from professional hockey. Thank you for your service to the league!</p>
+    <button class="btn btn-primary btn-lg" (click)="createNewPlayer()">
+      <i class="fas fa-plus me-2"></i>Create New Player
+    </button>
+  </div>
+</div>
+
+<!-- Show player creation form -->
+<div *ngIf="!loading && showCreateForm">
+  <div class="container mt-4">
+    <div class="card shadow-lg">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+          <i class="fas fa-user-plus me-2"></i>Create Your Player
+        </h4>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Player Creation Process:</strong> Your player will be submitted for approval by league management. 
+          Once approved, your player will be created with the appropriate attributes and you'll be able to start playing!
+        </div>
+        
+        <form (ngSubmit)="createPlayer()" class="row g-3">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.firstName" name="firstName" required />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.lastName" name="lastName" required />
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Play by Play Name</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.gamertag" name="gamertag" />
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Position</label>
+            <select class="form-select" [(ngModel)]="playerForm.position" name="position" (change)="onPositionChange()" required>
+              <option value="">Select Position</option>
+              <option value="LW">Left Wing</option>
+              <option value="C">Center</option>
+              <option value="RW">Right Wing</option>
+              <option value="D">Defense</option>
+              <option value="G">Goalie</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3" *ngIf="filteredArchetypes.length > 0">
+            <label class="form-label">Archetype</label>
+            <select class="form-select" [(ngModel)]="playerForm.archetype" name="archetype">
+              <option *ngFor="let type of filteredArchetypes" [value]="type">{{ type }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Jersey Number</label>
+            <input type="number" class="form-control" [(ngModel)]="playerForm.jerseyNumber" name="jerseyNumber" min="0" max="99" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Handedness</label>
+            <select class="form-select" [(ngModel)]="playerForm.handedness" name="handedness">
+              <option value="Left">Left</option>
+              <option value="Right">Right</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Height (inches)</label>
+            <input type="number" class="form-control" [(ngModel)]="playerForm.height" name="height" min="67" max="81" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Weight (lbs)</label>
+            <input type="number" class="form-control" [(ngModel)]="playerForm.weight" name="weight" min="129" max="290" />
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Fighter Tendency</label>
+            <select class="form-select" [(ngModel)]="playerForm.fight" name="fight">
+              <option value="Never">Never</option>
+              <option value="Rarely">Rarely</option>
+              <option value="Sometimes">Sometimes</option>
+              <option value="Often">Often</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Place of Origin</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.origin" name="origin" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Hair Style / Color (1–73)</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.hair" name="hair" />
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Beard</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.beard" name="beard" />
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Stick Tape Color</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.tape" name="tape" />
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Ethnicity</label>
+            <select class="form-select" [(ngModel)]="playerForm.ethnicity" name="ethnicity">
+              <option value="Caucasian">Caucasian</option>
+              <option value="African-American">African-American</option>
+            </select>
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Twitch Name</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.twitch" name="twitch" />
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">How did you find us?</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.referral" name="referral" />
+          </div>
+
+          <div class="col-12 mb-3">
+            <label class="form-label">Who invited you (bonus)?</label>
+            <input type="text" class="form-control" [(ngModel)]="playerForm.invitedBy" name="invitedBy" />
+          </div>
+
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+              <i class="fas fa-paper-plane me-2"></i>Submit Player for Approval
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Player Manager for Active or Pending Players -->
+<div *ngIf="!loading && (hasActivePlayer || hasPendingPlayer)">
+  <app-player-manager></app-player-manager>
+</div>

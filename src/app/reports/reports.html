@@ -1,0 +1,28 @@
+<div class="container mt-5">
+    <h3 class="text-center mb-4">Export Game Data</h3>
+  
+    <!-- Team Selection -->
+    <div class="mb-3">
+      <label for="teamSelect" class="form-label">Select Team</label>
+      <select id="teamSelect" class="form-select" [(ngModel)]="selectedTeamId" (change)="onTeamSelect()">
+        <option value="">-- Choose a Team --</option>
+        <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
+      </select>
+    </div>
+  
+    <!-- Game Selection -->
+    <div class="mb-3" *ngIf="selectedTeamId">
+      <label for="gameSelect" class="form-label">Select Game</label>
+      <select id="gameSelect" class="form-select" [(ngModel)]="selectedGameId">
+        <option value="">-- Choose a Game --</option>
+        <option *ngFor="let game of games" [value]="game.id">
+          {{ game['date']?.toDate?.() ? (game['date'].toDate() | date:'mediumDate') : game['date'] }} vs {{ game['opponent'] }}
+        </option>
+      </select>
+    </div>
+  
+    <!-- Export Button -->
+    <div class="text-center mt-4">
+      <button class="btn btn-success" (click)="exportSelectedGameToCSV()" [disabled]="!selectedGameId">Export Selected Game to CSV</button>
+    </div>
+  </div>

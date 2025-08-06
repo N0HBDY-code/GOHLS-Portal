@@ -1,0 +1,40 @@
+<div class="container mt-4">
+    <h2>Role Management</h2>
+  
+    <!-- Loading spinner -->
+    <div *ngIf="loading" class="text-center">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  
+    <!-- Users List -->
+    <div *ngIf="!loading">
+      <div *ngFor="let user of users" class="card my-3">
+        <div class="card-body">
+          <h5 class="card-title">{{ user.displayName || 'Unnamed User' }}</h5>
+          <p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
+  
+          <!-- Current Roles -->
+          <div>
+            <strong>Roles:</strong>
+            <span *ngFor="let role of user.roles || []" class="badge bg-secondary me-1">
+              {{ role }}
+              <button type="button" class="btn btn-sm btn-danger ms-1" (click)="removeRole(user.uid, role)">x</button>
+            </span>
+          </div>
+  
+          <!-- Add Role -->
+          <div class="mt-3">
+            <label for="roleSelect">Add Role:</label>
+            <select [(ngModel)]="selectedRole" name="newRole" class="form-select w-auto d-inline-block ms-2 me-2">
+              <option value="">Select role</option>
+              <option *ngFor="let role of availableRoles" [value]="role">{{ role }}</option>
+            </select>
+            <button class="btn btn-success" (click)="addRole(user.uid, selectedRole)">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  

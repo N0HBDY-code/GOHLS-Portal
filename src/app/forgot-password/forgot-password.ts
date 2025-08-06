@@ -1,0 +1,21 @@
+import { Component, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Auths } from '../auth-service/auth-service';
+
+@Component({
+  selector: 'app-forgot-password',
+  imports: [FormsModule],
+  templateUrl: './forgot-password.component.html',
+  styleUrl: './forgot-password.component.css'
+})
+export class ForgotPassword {
+
+  private authService = inject(Auths);
+
+  email: string = '';
+
+  forgotPassword() {
+    this.authService.forgotPassword(this.email);
+    this.email = '';
+  }
+}

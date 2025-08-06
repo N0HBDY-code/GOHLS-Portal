@@ -1,0 +1,39 @@
+<div class="container mt-5">
+    <h3 class="mb-4">Assign Roles</h3>
+  
+    <div class="mb-3">
+      <label for="email" class="form-label">User Email</label>
+      <input
+        type="email"
+        id="email"
+        class="form-control"
+        [(ngModel)]="email"
+        placeholder="Enter user email"
+      />
+    </div>
+  
+    <div class="mb-3">
+      <label class="form-label">Select Roles</label>
+      <div class="form-check" *ngFor="let role of availableRoles">
+        <input
+          type="checkbox"
+          class="form-check-input"
+          [id]="role"
+          [value]="role"
+          [checked]="selectedRoles.includes(role)"
+          (change)="toggleRole(role)"
+        />
+        <label class="form-check-label" [for]="role">{{ role }}</label>
+      </div>
+    </div>
+  
+    <button class="btn btn-primary" (click)="assignRoles()">Assign Roles</button>
+  
+    <div class="alert alert-success mt-3" *ngIf="successMessage">
+      {{ successMessage }}
+    </div>
+    <div class="alert alert-danger mt-3" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+  </div>
+  

@@ -1,0 +1,345 @@
+.scoreboard {
+  background: #1a1a1a;
+  color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.game-info {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  font-size: 1rem;
+  color: #999;
+  font-weight: 500;
+}
+
+.period-indicator {
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  width: auto;
+  margin: 0 auto;
+}
+
+.period-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.period-button {
+  background: #333;
+  border: none;
+  color: #999;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.period-button:hover {
+  background: #444;
+  color: white;
+}
+
+.period-button.active {
+  background: #666;
+  color: white;
+}
+
+.period-display {
+  color: white;
+  font-weight: 500;
+  text-align: center;
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.edit-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  background: #333;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.edit-button:hover {
+  background: #444;
+}
+
+.team-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 200px;
+  justify-content: center;
+}
+
+.team-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 50%;
+  padding: 5px;
+}
+
+.team-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.score-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2rem;
+}
+
+.score-input {
+  width: 80px;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0 0.5rem;
+  background: transparent;
+  border: 2px solid #333;
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+  padding: 0.25rem;
+}
+
+.score-input:focus {
+  outline: none;
+  border-color: #666;
+}
+
+.score-input::-webkit-inner-spin-button,
+.score-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.score-divider {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0 0.5rem;
+  color: #666;
+  display: inline-block;
+  text-align: center;
+  width: 20px;
+}
+
+.score-display {
+  width: 80px;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0 0.5rem;
+  text-align: center;
+  color: white;
+  display: inline-block;
+}
+
+/* Game Stats Styles */
+.game-stats {
+  background: #1a1a1a;
+  color: white;
+  padding: 2rem;
+  border-radius: 10px;
+}
+
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #333;
+}
+
+.stat-label {
+  text-align: center;
+  font-weight: 500;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.9rem;
+}
+
+.away-stat,
+.home-stat {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.stat-input {
+  width: 80px;
+  background: transparent;
+  border: 2px solid #333;
+  border-radius: 4px;
+  color: white;
+  text-align: center;
+  padding: 0.25rem;
+  font-size: 1.2rem;
+}
+
+.stat-input:focus {
+  outline: none;
+  border-color: #666;
+}
+
+.time-input-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.time-input {
+  width: 40px;
+  background: transparent;
+  border: 2px solid #333;
+  border-radius: 4px;
+  color: white;
+  text-align: center;
+  padding: 0.25rem;
+  font-size: 1.2rem;
+}
+
+.powerplay-input-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.powerplay-input {
+  width: 40px;
+  background: transparent;
+  border: 2px solid #333;
+  border-radius: 4px;
+  color: white;
+  text-align: center;
+  padding: 0.25rem;
+  font-size: 1.2rem;
+}
+
+/* Player Stats Styles */
+.player-stats .card {
+  background: #1a1a1a;
+  color: white;
+}
+
+.player-stats .table {
+  color: white;
+  margin-bottom: 0;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.player-stats .table thead th {
+  background: #1a1a1a;
+  border-color: #333;
+  color: #999;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0.5rem;
+  text-align: center;
+  font-weight: normal;
+}
+
+.player-stats .table td {
+  border-color: #333;
+  padding: 0.5rem;
+  vertical-align: middle;
+  text-align: center;
+  background: #1a1a1a;
+  color: white;
+}
+
+.player-stats .table tbody tr:hover {
+  background: #222;
+}
+
+.player-stats .table td:nth-child(2) {
+  text-align: left;
+}
+
+.stat-input {
+  width: 50px;
+  background: transparent;
+  border: 1px solid #444;
+  color: white;
+  padding: 0.25rem;
+  text-align: center;
+  font-family: monospace;
+}
+
+.player-stats .table tbody tr:nth-child(odd) td {
+  background: #1d1d1d;
+}
+
+.player-stats .table tbody tr:nth-child(even) td {
+  background: #1a1a1a;
+}
+
+.stat-input:focus {
+  background: #333;
+  border-color: #666;
+  color: white;
+  outline: none;
+}
+
+.stat-input::-webkit-inner-spin-button,
+.stat-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.btn-group .btn {
+  color: white;
+  border-color: #666;
+}
+
+.btn-group .btn:hover {
+  background: #444;
+}
+
+.btn-group .btn.btn-primary {
+  background: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-group .btn.btn-outline-primary {
+  color: #0d6efd;
+  background: transparent;
+}
+
+.btn-group .btn.btn-outline-primary:hover {
+  background: #0d6efd;
+  color: white;
+}

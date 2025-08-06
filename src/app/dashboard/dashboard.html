@@ -1,0 +1,260 @@
+<div class="container mt-4">
+  <!-- Today's Games - Carousel Display Above Twitch -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-calendar-day me-2"></i>Today's Games
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loadingGames" class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <p class="mt-2 mb-0 text-muted">Loading games...</p>
+          </div>
+          
+          <div *ngIf="!loadingGames && todaysGames.length === 0" class="text-center py-4 text-muted">
+            <i class="fas fa-calendar-times fa-2x mb-2"></i>
+            <p class="mb-0">No games scheduled for today</p>
+          </div>
+          
+          <!-- FIXED Games Carousel - Now shows ONE game at a time with smooth transitions -->
+          <div *ngIf="!loadingGames && todaysGames.length > 0" class="games-carousel-container">
+            <!-- Carousel Navigation - Only show if multiple games -->
+            <div class="carousel-nav" *ngIf="todaysGames.length > 1">
+              <button class="carousel-btn carousel-btn-prev" 
+                      (click)="previousGame()">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              <button class="carousel-btn carousel-btn-next" 
+                      (click)="nextGame()">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+
+            <!-- FIXED: Single Game Display Container -->
+            <div class="single-game-container" (click)="navigateToSpecificGame()">
+              <div class="game-card-single" *ngIf="todaysGames[currentGameIndex] as currentGame">
+                <!-- Game Header -->
+                <div class="game-header">
+                  <div class="game-week-info">
+                    <span class="week-badge">Week {{ currentGame.week }}</span>
+                    <span class="day-badge">{{ currentGame.day }}</span>
+                  </div>
+                  <div *ngIf="hasScore(currentGame)" class="game-status">
+                    <span class="status-badge" 
+                          [class.live]="currentGame.period && currentGame.period !== 'Final'"
+                          [class.final]="currentGame.period === 'Final'">
+                      {{ currentGame.period || 'Live' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Teams Display -->
+                <div class="teams-container">
+                  <!-- Away Team -->
+                  <div class="team-display away-team">
+                    <img *ngIf="currentGame.awayTeamLogo" 
+                         [src]="currentGame.awayTeamLogo" 
+                         [alt]="currentGame.awayTeam"
+                         class="team-logo">
+                    <div class="team-info">
+                      <div class="team-name">{{ currentGame.awayTeam }}</div>
+                      <div class="team-record">Away</div>
+                    </div>
+                  </div>
+
+                  <!-- VS / Score Section -->
+                  <div class="vs-section">
+                    <div *ngIf="!hasScore(currentGame)" class="vs-display">
+                      <span class="vs-text">VS</span>
+                    </div>
+                    <div *ngIf="hasScore(currentGame)" class="score-display">
+                      <div class="score-line">
+                        <span class="away-score">{{ currentGame.awayScore || 0 }}</span>
+                        <span class="score-separator">-</span>
+                        <span class="home-score">{{ currentGame.homeScore || 0 }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Home Team -->
+                  <div class="team-display home-team">
+                    <div class="team-info">
+                      <div class="team-name">{{ currentGame.homeTeam }}</div>
+                      <div class="team-record">Home</div>
+                    </div>
+                    <img *ngIf="currentGame.homeTeamLogo" 
+                         [src]="currentGame.homeTeamLogo" 
+                         [alt]="currentGame.homeTeam"
+                         class="team-logo">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Carousel Indicators - Only show if multiple games -->
+            <div class="carousel-indicators" *ngIf="todaysGames.length > 1">
+              <button *ngFor="let game of todaysGames; let i = index"
+                      class="indicator-dot"
+                      [class.active]="i === currentGameIndex"
+                      (click)="goToGame(i)">
+              </button>
+            </div>
+
+            <!-- Auto-rotation indicator - Only show if multiple games -->
+            <div class="auto-rotation-info" *ngIf="todaysGames.length > 1">
+              <small class="text-muted">
+                <i class="fas fa-sync-alt me-1"></i>
+                Auto-rotating every {{ autoRotateInterval / 1000 }} seconds
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Section with Twitch Stream -->
+  <div class="row mb-5">
+    <div class="col-12">
+      <div class="card bg-dark text-white">
+        <div class="card-body text-center py-5">
+          <h1 class="display-4 mb-3">Welcome to GOHLS</h1>
+          <p class="lead mb-4">Watch live games and stay updated with the latest league action</p>
+          
+          <!-- Twitch Embed -->
+          <div class="ratio ratio-16x9 mb-4" style="max-width: 800px; margin: 0 auto;">
+            <iframe 
+              src="https://player.twitch.tv/?channel=gohls_official&parent=localhost&parent=127.0.0.1&parent=your-domain.com&autoplay=false"
+              allowfullscreen>
+            </iframe>
+          </div>
+          
+          <a href="https://www.twitch.tv/gohls_official" 
+             target="_blank" 
+             class="btn btn-primary btn-lg">
+            <i class="fab fa-twitch me-2"></i>Watch on Twitch
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div class="row">
+    <!-- Newest Players -->
+    <div class="col-lg-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-user-plus me-2"></i>Newest Players
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loadingPlayers" class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-success"></div>
+            <p class="mt-2 mb-0 text-muted">Loading players...</p>
+          </div>
+          
+          <div *ngIf="!loadingPlayers && newestPlayers.length === 0" class="text-center py-4 text-muted">
+            <i class="fas fa-user-slash fa-2x mb-2"></i>
+            <p class="mb-0">No new players recently</p>
+          </div>
+          
+          <div *ngFor="let player of newestPlayers" class="player-item mb-3 p-3 border rounded">
+            <div class="d-flex align-items-center">
+              <div class="player-avatar me-3">
+                {{ player.firstName.charAt(0) }}{{ player.lastName.charAt(0) }}
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-1">{{ player.firstName }} {{ player.lastName }}</h6>
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted">{{ player.position }} • {{ player.archetype }}</small>
+                  <span class="badge bg-light text-dark">Age {{ player.age }}</span>
+                </div>
+                <small class="text-primary">{{ player.teamName }}</small>
+              </div>
+            </div>
+            <div class="mt-2">
+              <small class="text-muted">{{ getTimeAgo(player.createdDate) }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="col-lg-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">
+            <i class="fas fa-exchange-alt me-2"></i>Recent Transactions
+          </h5>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loadingTransactions" class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-warning"></div>
+            <p class="mt-2 mb-0 text-muted">Loading transactions...</p>
+          </div>
+          
+          <div *ngIf="!loadingTransactions && recentTransactions.length === 0" class="text-center py-4 text-muted">
+            <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+            <p class="mb-0">No recent transactions</p>
+          </div>
+          
+          <div *ngFor="let transaction of recentTransactions" class="transaction-item mb-3 p-3 border rounded">
+            <div class="d-flex align-items-start">
+              <i [class]="getTransactionIcon(transaction.type) + ' ' + getTransactionColor(transaction.type) + ' me-2 mt-1'"></i>
+              <div class="flex-grow-1">
+                <p class="mb-1">{{ transaction.description }}</p>
+                <small class="text-muted">{{ getTimeAgo(transaction.timestamp) }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Row -->
+  <div class="row">
+    <div class="col-md-3 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <i class="fas fa-users fa-2x text-primary mb-2"></i>
+          <h5 class="card-title">Active Players</h5>
+          <p class="card-text display-6">{{ newestPlayers.length > 0 ? '500+' : '0' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <i class="fas fa-trophy fa-2x text-warning mb-2"></i>
+          <h5 class="card-title">Teams</h5>
+          <p class="card-text display-6">32</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <i class="fas fa-gamepad fa-2x text-success mb-2"></i>
+          <h5 class="card-title">Games Played</h5>
+          <p class="card-text display-6">{{ todaysGames.length > 0 ? '1000+' : '0' }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card text-center">
+        <div class="card-body">
+          <i class="fas fa-calendar fa-2x text-info mb-2"></i>
+          <h5 class="card-title">Current Season</h5>
+          <p class="card-text display-6">2025</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

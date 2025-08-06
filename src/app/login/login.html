@@ -1,0 +1,70 @@
+<div class="container-fluid">
+  <div class="row mt-5">
+    <div class="col"></div>
+    <div class="col-4">
+      <div class="card shadow">
+        <div class="card-body">
+          <form>
+            <div class="mb-3">
+              <h4 class="text-dark text-muted">Login</h4>
+            </div>
+            <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input
+                type="text"
+                class="form-control"
+                name="username"
+                [(ngModel)]="username"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input
+                type="password"
+                class="form-control"
+                name="password"
+                [(ngModel)]="password"
+              />
+            </div>
+            <button type="button" class="btn btn-info" (click)="login()">
+              Login
+            </button>
+            <div class="row">
+              <div class="col-md-6">
+                <a href="/register" style="text-decoration: none"
+                  >Need Account? <span class="text-danger">Register</span>
+                </a>
+              </div>
+              <div class="col-md-6">
+                <a
+                  href="/forgot-password"
+                  class="text-dark"
+                  style="text-decoration: none"
+                  >Forgot Password?
+                </a>
+              </div>
+            </div>
+            <div class="row mt-2">
+              <a
+                (click)="signInWithGoogle()"
+                style="text-decoration: none; cursor: pointer"
+              >
+                <div class="card shadow text-center">
+                  <div class="card-body">
+                    <img
+                      src="/images/icons8-google-48.png"
+                      style="width: 24px"
+                      alt=""
+                    />
+                    Sign in with Google
+                  </div>
+                </div>
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col"></div>
+  </div>
+</div>

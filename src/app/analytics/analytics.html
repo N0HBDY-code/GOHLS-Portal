@@ -1,0 +1,451 @@
+<div class="container mt-4">
+  <!-- Page Title -->
+  <h2 class="page-title">
+    <i class="fas fa-chart-line me-2"></i>Stats and Standings
+  </h2>
+
+  <!-- Navigation Tabs -->
+  <div class="mb-4">
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentView === 'standings'"
+           (click)="currentView = 'standings'">
+          <i class="fas fa-trophy me-1"></i> Standings
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentView === 'analytics'"
+           (click)="currentView = 'analytics'">
+          <i class="fas fa-chart-line me-1"></i> Team Analytics
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentView === 'reports'"
+           (click)="currentView = 'reports'">
+          <i class="fas fa-file-export me-1"></i> Export Reports
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Standings View -->
+  <div *ngIf="currentView === 'standings'">
+    <!-- League and View Selection -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <h5 class="mb-0">League Standings</h5>
+          
+          <div class="d-flex gap-3 align-items-center flex-wrap">
+            <!-- View Type Selection -->
+            <div class="btn-group">
+              <button class="btn btn-sm" 
+                      [class.btn-info]="standingsViewType === 'division'"
+                      [class.btn-outline-info]="standingsViewType !== 'division'"
+                      (click)="standingsViewType = 'division'; onStandingsViewChange()">
+                <i class="fas fa-layer-group me-1"></i>By Division
+              </button>
+              <button class="btn btn-sm"
+                      [class.btn-info]="standingsViewType === 'conference'"
+                      [class.btn-outline-info]="standingsViewType !== 'conference'"
+                      (click)="standingsViewType = 'conference'; onStandingsViewChange()">
+                <i class="fas fa-sitemap me-1"></i>By Conference
+              </button>
+              <button class="btn btn-sm"
+                      [class.btn-info]="standingsViewType === 'overall'"
+                      [class.btn-outline-info]="standingsViewType !== 'overall'"
+                      (click)="standingsViewType = 'overall'; onStandingsViewChange()">
+                <i class="fas fa-globe me-1"></i>Overall
+              </button>
+            </div>
+
+            <!-- League Selection -->
+            <div class="btn-group">
+              <button class="btn" 
+                      [class.btn-primary]="selectedLeague === 'major'"
+                      [class.btn-outline-primary]="selectedLeague !== 'major'"
+                      (click)="selectedLeague = 'major'; onLeagueChange()">
+                Major League
+              </button>
+              <button class="btn"
+                      [class.btn-primary]="selectedLeague === 'minor'"
+                      [class.btn-outline-primary]="selectedLeague !== 'minor'"
+                      (click)="selectedLeague = 'minor'; onLeagueChange()">
+                Minor League
+              </button>
+            </div>
+
+            <!-- Management Buttons -->
+            <div class="btn-group">
+              <button *ngIf="canManagePlayoffs"
+                      class="btn btn-outline-warning btn-sm" 
+                      (click)="showPlayoffManager = !showPlayoffManager"
+                      title="Manage playoff clinching status">
+                <i class="fas fa-cog me-1"></i>Manage Playoffs
+              </button>
+              
+              <!-- Refresh Button -->
+              <button class="btn btn-outline-secondary btn-sm" 
+                      (click)="refreshStandings()"
+                      [disabled]="loadingStandings"
+                      title="Refresh standings data">
+                <i class="fas fa-sync-alt" [class.fa-spin]="loadingStandings"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Playoff Management Panel -->
+    <div *ngIf="showPlayoffManager && canManagePlayoffs" class="card mb-4 border-warning">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">
+          <i class="fas fa-trophy me-2"></i>Playoff Status Management
+        </h5>
+      </div>
+      <div class="card-body">
+        <p class="mb-3">Set playoff clinching status for teams. This will add visual indicators to the standings.</p>
+        
+        <div class="row">
+          <div *ngFor="let team of filteredTeams" class="col-md-4 mb-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                  <img *ngIf="team.logoUrl" 
+                       [src]="team.logoUrl" 
+                       [alt]="team.name"
+                       class="team-logo-small me-2">
+                  <strong>{{ team.name }}</strong>
+                </div>
+                <select class="form-select form-select-sm" 
+                        [value]="getTeamPlayoffStatus(team.id)"
+                        (change)="updateTeamPlayoffStatus(team.id, $any($event.target).value)">
+                  <option value="none">No Status</option>
+                  <option value="league">League Championship Clinched (P)</option>
+                  <option value="conference">Conference Championship Clinched (z)</option>
+                  <option value="division">Division Championship Clinched (y)</option>
+                  <option value="playoff">Playoff Spot Clinched (x)</option>
+                  <option value="eliminated">Eliminated (e)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Division View -->
+    <div *ngIf="standingsViewType === 'division'">
+      <div *ngFor="let conference of conferences" class="mb-5">
+        <h4 class="text-primary mb-3">{{ conference.name }}</h4>
+        
+        <div *ngFor="let division of conference.divisions" class="mb-4">
+          <h5 class="mb-3">{{ division }}</h5>
+          
+          <div class="table-responsive">
+            <table class="table table-striped table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Rank</th>
+                  <th>Team</th>
+                  <th>GP</th>
+                  <th>W</th>
+                  <th>L</th>
+                  <th>OTL</th>
+                  <th>PTS</th>
+                  <th>GF</th>
+                  <th>GA</th>
+                  <th>DIFF</th>
+                  <th>PCT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let team of getStandingsForDivision(conference.name, division); let i = index"
+                    [ngClass]="getPlayoffStatusClass(team)">
+                  <td class="fw-bold">{{ i + 1 }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img *ngIf="team.logoUrl" 
+                           [src]="team.logoUrl" 
+                           [alt]="team.name"
+                           class="team-logo-small me-2">
+                      <span class="fw-semibold">{{ team.name }}</span>
+                      <span *ngIf="getPlayoffStatusBadge(team) as badge" 
+                            [ngClass]="badge.class" 
+                            class="ms-2">{{ badge.text }}</span>
+                    </div>
+                  </td>
+                  <td>{{ team.gamesPlayed }}</td>
+                  <td>{{ team.wins }}</td>
+                  <td>{{ team.losses }}</td>
+                  <td>{{ team.overtimeLosses }}</td>
+                  <td class="fw-bold">{{ team.points }}</td>
+                  <td>{{ team.goalsFor }}</td>
+                  <td>{{ team.goalsAgainst }}</td>
+                  <td [class.text-success]="team.goalDifferential > 0"
+                      [class.text-danger]="team.goalDifferential < 0">
+                    {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
+                  </td>
+                  <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- No teams message -->
+          <div *ngIf="getStandingsForDivision(conference.name, division).length === 0" 
+               class="text-center text-muted py-4">
+            <i class="fas fa-info-circle me-2"></i>No teams in {{ division }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conference View -->
+    <div *ngIf="standingsViewType === 'conference'">
+      <div *ngFor="let conference of conferences" class="mb-5">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">{{ conference.name }}</h4>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover mb-0">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Rank</th>
+                    <th>Team</th>
+                    <th>Division</th>
+                    <th>GP</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>OTL</th>
+                    <th>PTS</th>
+                    <th>GF</th>
+                    <th>GA</th>
+                    <th>DIFF</th>
+                    <th>PCT</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let team of getStandingsForConference(conference.name); let i = index"
+                      [ngClass]="getPlayoffStatusClass(team)">
+                    <td class="fw-bold">{{ i + 1 }}</td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <img *ngIf="team.logoUrl" 
+                             [src]="team.logoUrl" 
+                             [alt]="team.name"
+                             class="team-logo-small me-2">
+                        <span class="fw-semibold">{{ team.name }}</span>
+                        <span *ngIf="getPlayoffStatusBadge(team) as badge" 
+                              [ngClass]="badge.class" 
+                              class="ms-2">{{ badge.text }}</span>
+                      </div>
+                    </td>
+                    <td><small class="text-muted">{{ team.division }}</small></td>
+                    <td>{{ team.gamesPlayed }}</td>
+                    <td>{{ team.wins }}</td>
+                    <td>{{ team.losses }}</td>
+                    <td>{{ team.overtimeLosses }}</td>
+                    <td class="fw-bold">{{ team.points }}</td>
+                    <td>{{ team.goalsFor }}</td>
+                    <td>{{ team.goalsAgainst }}</td>
+                    <td [class.text-success]="team.goalDifferential > 0"
+                        [class.text-danger]="team.goalDifferential < 0">
+                      {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
+                    </td>
+                    <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall View -->
+    <div *ngIf="standingsViewType === 'overall'">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">{{ selectedLeague | titlecase }} League Overall Standings</h4>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead class="table-dark">
+                <tr>
+                  <th>Rank</th>
+                  <th>Team</th>
+                  <th>Conference</th>
+                  <th>Division</th>
+                  <th>GP</th>
+                  <th>W</th>
+                  <th>L</th>
+                  <th>OTL</th>
+                  <th>PTS</th>
+                  <th>GF</th>
+                  <th>GA</th>
+                  <th>DIFF</th>
+                  <th>PCT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let team of getOverallStandings(); let i = index"
+                    [ngClass]="getPlayoffStatusClass(team)">
+                  <td class="fw-bold">{{ i + 1 }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img *ngIf="team.logoUrl" 
+                           [src]="team.logoUrl" 
+                           [alt]="team.name"
+                           class="team-logo-small me-2">
+                      <span class="fw-semibold">{{ team.name }}</span>
+                      <span *ngIf="getPlayoffStatusBadge(team) as badge" 
+                            [ngClass]="badge.class" 
+                            class="ms-2">{{ badge.text }}</span>
+                    </div>
+                  </td>
+                  <td><small class="text-muted">{{ team.conference }}</small></td>
+                  <td><small class="text-muted">{{ team.division }}</small></td>
+                  <td>{{ team.gamesPlayed }}</td>
+                  <td>{{ team.wins }}</td>
+                  <td>{{ team.losses }}</td>
+                  <td>{{ team.overtimeLosses }}</td>
+                  <td class="fw-bold">{{ team.points }}</td>
+                  <td>{{ team.goalsFor }}</td>
+                  <td>{{ team.goalsAgainst }}</td>
+                  <td [class.text-success]="team.goalDifferential > 0"
+                      [class.text-danger]="team.goalDifferential < 0">
+                    {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
+                  </td>
+                  <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Playoff Legend -->
+        <div class="card-footer bg-light">
+          <div class="row text-center">
+            <div class="col-md-2">
+              <span class="badge bg-warning text-dark me-2">P</span>
+              <small>League Championship</small>
+            </div>
+            <div class="col-md-2">
+              <span class="badge bg-info me-2">z</span>
+              <small>Conference Championship</small>
+            </div>
+            <div class="col-md-2">
+              <span class="badge bg-primary me-2">y</span>
+              <small>Division Championship</small>
+            </div>
+            <div class="col-md-2">
+              <span class="badge bg-success me-2">x</span>
+              <small>Playoff Spot</small>
+            </div>
+            <div class="col-md-2">
+              <span class="badge bg-danger me-2">e</span>
+              <small>Eliminated</small>
+            </div>
+            <div class="col-md-2">
+              <small class="text-muted">No indicator - Still competing</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading indicator -->
+    <div *ngIf="loadingStandings" class="text-center my-4">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading standings...</span>
+      </div>
+      <p class="mt-2 text-muted">Loading {{ selectedLeague }} league standings...</p>
+    </div>
+
+    <!-- Cache info (for development) -->
+    <div class="mt-4 text-center">
+      <small class="text-muted">
+        <i class="fas fa-clock me-1"></i>
+        Data cached for faster loading • 
+        <button class="btn btn-link btn-sm p-0" (click)="clearCache()">Clear cache</button>
+      </small>
+    </div>
+  </div>
+
+  <!-- Team Analytics View -->
+  <div *ngIf="currentView === 'analytics'">
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Team Analytics</h5>
+        
+        <div class="mb-3">
+          <label for="teamSelect" class="form-label">Select Team</label>
+          <select id="teamSelect" class="form-select" [(ngModel)]="selectedTeamId" (change)="onTeamSelect()">
+            <option value="">-- Choose a Team --</option>
+            <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
+          </select>
+        </div>
+
+        <div *ngIf="selectedTeamId" class="card shadow p-4">
+          <h5 class="mb-3">Stats for {{ selectedTeamName }}</h5>
+          <ul class="list-group">
+            <li class="list-group-item">Games Played: <strong>{{ totalGames }}</strong></li>
+            <li class="list-group-item">Total Points: <strong>{{ totalPoints }}</strong></li>
+            <li class="list-group-item">Total Assists: <strong>{{ totalAssists }}</strong></li>
+            <li class="list-group-item">Total Rebounds: <strong>{{ totalRebounds }}</strong></li>
+            <li class="list-group-item">Avg Points/Game: <strong>{{ avgPoints }}</strong></li>
+            <li class="list-group-item">Avg Assists/Game: <strong>{{ avgAssists }}</strong></li>
+            <li class="list-group-item">Avg Rebounds/Game: <strong>{{ avgRebounds }}</strong></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Reports View -->
+  <div *ngIf="currentView === 'reports'">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Export Game Data</h5>
+      </div>
+      <div class="card-body">
+        <!-- Team Selection -->
+        <div class="mb-3">
+          <label for="exportTeamSelect" class="form-label">Select Team</label>
+          <select id="exportTeamSelect" class="form-select" [(ngModel)]="selectedExportTeamId" (change)="onExportTeamSelect()">
+            <option value="">-- Choose a Team --</option>
+            <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
+          </select>
+        </div>
+
+        <!-- Game Selection -->
+        <div class="mb-3" *ngIf="selectedExportTeamId">
+          <label for="exportGameSelect" class="form-label">Select Game</label>
+          <select id="exportGameSelect" class="form-select" [(ngModel)]="selectedExportGameId">
+            <option value="">-- Choose a Game --</option>
+            <option *ngFor="let game of exportGames" [value]="game.id">
+              {{ game['date']?.toDate?.() ? (game['date'].toDate() | date:'mediumDate') : game['date'] }} vs {{ game['opponent'] }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Export Button -->
+        <div class="text-center mt-4">
+          <button class="btn btn-success" 
+                  (click)="exportSelectedGameToCSV()" 
+                  [disabled]="!selectedExportGameId">
+            <i class="fas fa-download me-2"></i>Export Selected Game to CSV
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

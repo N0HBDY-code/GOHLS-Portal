@@ -1,0 +1,154 @@
+<div class="container mt-4">
+  <!-- Add Game Form -->
+  <div class="card mb-4" *ngIf="canManageGames">
+    <div class="card-header">
+      <h5 class="mb-0">Add New Game</h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="addGame()" class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Home Team</label>
+          <select class="form-select" [(ngModel)]="newGame.homeTeamId" name="homeTeam" required>
+            <option value="">Select Home Team</option>
+            <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Away Team</label>
+          <select class="form-select" [(ngModel)]="newGame.awayTeamId" name="awayTeam" required>
+            <option value="">Select Away Team</option>
+            <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Week</label>
+          <input type="number" class="form-control" [(ngModel)]="newGame.week" name="week" min="1" required>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Day</label>
+          <input type="number" class="form-control" [(ngModel)]="newGame.day" name="day" min="1" required>
+        </div>
+
+        <div class="col-12">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" [(ngModel)]="newGame.isRival" name="isRival" id="isRival">
+            <label class="form-check-label" for="isRival">Rivalry Game</label>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <button type="submit" class="btn btn-primary">Add Game</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Schedule Display -->
+  <div class="card">
+    <div class="card-header">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Season {{ currentSeason }} Schedule</h5>
+        <button *ngIf="isDeveloper" 
+                class="btn btn-danger" 
+                (click)="clearAllGames()"
+                [disabled]="isClearing">
+          {{ isClearing ? 'Clearing...' : 'Clear All Games' }}
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Week Selection -->
+      <div class="btn-group mb-4">
+        <button *ngFor="let week of activeWeeks"
+                class="btn"
+                [class.btn-primary]="selectedWeek === week"
+                [class.btn-outline-primary]="selectedWeek !== week"
+                (click)="onWeekChange(week)">
+          Week {{ week }}
+        </button>
+      </div>
+
+      <!-- Loading Indicator -->
+      <div *ngIf="loading" class="text-center my-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <!-- Games Display -->
+      <ng-container *ngIf="getWeekSchedule(selectedWeek) as weekSchedule">
+        <div *ngFor="let day of getDays(weekSchedule)" class="mb-4">
+          <h6 class="text-muted mb-3">{{ day }}</h6>
+          
+          <div class="row g-4">
+            <div class="col" *ngFor="let game of getGamesForDay(weekSchedule, day)">
+              <div class="game-card" (click)="viewGame(game)">
+                <!-- Home Team -->
+                <div class="team-row">
+                  <img [src]="game.homeLogo" 
+                       [alt]="game.homeTeam"
+                       class="team-logo"
+                       *ngIf="game.homeLogo">
+                  <span class="team-name">{{ game.homeTeam }}</span>
+                </div>
+
+                <!-- Score Display -->
+                <div class="text-center my-2" *ngIf="hasScore(game); else vsDisplay">
+                  <div class="score-display">
+                    <span class="score-number">{{ game.homeScore || 0 }}</span>
+                    <span class="score-divider">-</span>
+                    <span class="score-number">{{ game.awayScore || 0 }}</span>
+                  </div>
+                  <div class="game-status">
+                    <span class="badge" 
+                          [class.bg-warning]="game.period && game.period !== 'Final'"
+                          [class.bg-success]="game.period === 'Final'">
+                      {{ game.period || 'In Progress' }}
+                    </span>
+                  </div>
+                </div>
+
+                <ng-template #vsDisplay>
+                  <div class="text-center my-2">
+                    <span class="vs-text">VS</span>
+                  </div>
+                </ng-template>
+
+                <!-- Away Team -->
+                <div class="team-row">
+                  <img [src]="game.awayLogo" 
+                       [alt]="game.awayTeam"
+                       class="team-logo"
+                       *ngIf="game.awayLogo">
+                  <span class="team-name">{{ game.awayTeam }}</span>
+                </div>
+
+                <!-- Game Tags -->
+                <div class="mt-3">
+                  <span *ngFor="let tag of game.tags" 
+                        class="badge me-1"
+                        [class.bg-danger]="tag === 'rival'"
+                        [class.bg-primary]="tag === 'division'"
+                        [class.bg-success]="tag === 'conference'">
+                    {{ tag }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- Add empty columns to maintain 5 columns -->
+            <div class="col" *ngFor="let empty of [].constructor(5 - (getGamesForDay(weekSchedule, day).length % 5))"></div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- No Games Message -->
+      <div *ngIf="!loading && (!getWeekSchedule(selectedWeek) || getDays(getWeekSchedule(selectedWeek)!).length === 0)"
+           class="text-center text-muted my-4">
+        No games scheduled for Week {{ selectedWeek }}
+      </div>
+    </div>
+  </div>
+</div>

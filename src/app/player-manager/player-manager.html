@@ -1,0 +1,640 @@
+<div *ngIf="loading" class="loading-container">
+  <div class="spinner-border" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<!-- Pending Player Display -->
+<div *ngIf="!loading && isPendingPlayer && pendingPlayer" class="container mt-4">
+  <div class="player-header">
+    <div class="row align-items-center">
+      <div class="col-md-2 text-center">
+        <div class="player-avatar">
+          {{ pendingPlayer.firstName?.charAt(0) }}{{ pendingPlayer.lastName?.charAt(0) }}
+        </div>
+      </div>
+      <div class="col-md-7">
+        <h1 class="player-name">{{ pendingPlayer.firstName }} {{ pendingPlayer.lastName }}</h1>
+        <div class="player-position">
+          {{ pendingPlayer.position }} • {{ pendingPlayer.archetype }} • #{{ pendingPlayer.jerseyNumber }}
+        </div>
+        <div class="team-badge bg-warning text-dark">
+          <i class="fas fa-clock me-2"></i>Pending Approval
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-grid">
+          <div class="stat-item">
+            <div class="stat-label">Age</div>
+            <div class="stat-value">{{ pendingPlayer.age }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Height</div>
+            <div class="stat-value">{{ pendingPlayer.height }}"</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Weight</div>
+            <div class="stat-value">{{ pendingPlayer.weight }} lbs</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Hand</div>
+            <div class="stat-value">{{ pendingPlayer.handedness }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Status Information -->
+  <div class="card">
+    <div class="card-body text-center">
+      <div class="alert alert-warning">
+        <h4><i class="fas fa-hourglass-half me-2"></i>Player Pending Approval</h4>
+        <p class="mb-3">
+          Your player <strong>{{ pendingPlayer.firstName }} {{ pendingPlayer.lastName }}</strong> 
+          has been submitted for approval by league management.
+        </p>
+        <p class="mb-3">
+          <small class="text-muted">
+            Submitted on {{ pendingPlayer.submittedDate?.toDate?.() | date:'medium' }}<br>
+            This process typically takes 24-48 hours. You will be notified once your player has been approved.
+          </small>
+        </p>
+        <div class="row mt-4">
+          <div class="col-md-6">
+            <h6>Player Details</h6>
+            <ul class="list-unstyled text-start">
+              <li><strong>Position:</strong> {{ pendingPlayer.position }}</li>
+              <li><strong>Archetype:</strong> {{ pendingPlayer.archetype }}</li>
+              <li><strong>Jersey Number:</strong> #{{ pendingPlayer.jerseyNumber }}</li>
+              <li><strong>Handedness:</strong> {{ pendingPlayer.handedness }}</li>
+              <li><strong>Height:</strong> {{ pendingPlayer.height }}"</li>
+              <li><strong>Weight:</strong> {{ pendingPlayer.weight }} lbs</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6>Additional Info</h6>
+            <ul class="list-unstyled text-start">
+              <li><strong>Origin:</strong> {{ pendingPlayer.origin || 'N/A' }}</li>
+              <li><strong>Fighting:</strong> {{ pendingPlayer.fight || 'N/A' }}</li>
+              <li><strong>Twitch:</strong> {{ pendingPlayer.twitch || 'N/A' }}</li>
+              <li><strong>Referral:</strong> {{ pendingPlayer.referral || 'N/A' }}</li>
+              <li><strong>Invited By:</strong> {{ pendingPlayer.invitedBy || 'N/A' }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Active Player Display -->
+<div *ngIf="!loading && !isPendingPlayer && player && player?.status !== 'retired'" class="container mt-4">
+  <!-- Player Header -->
+  <div class="player-header">
+    <div class="row align-items-center">
+      <div class="col-md-2 text-center">
+        <div class="player-avatar">
+          {{ player.firstName?.charAt(0) }}{{ player.lastName?.charAt(0) }}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h1 class="player-name">{{ player.firstName }} {{ player.lastName }}</h1>
+        <div class="player-position">
+          {{ player.position }} • {{ player.archetype }} • #{{ player.jerseyNumber }}
+        </div>
+        <!-- Updated team display with logo -->
+        <div *ngIf="teamName" class="team-display">
+          <img *ngIf="teamLogo" 
+               [src]="teamLogo" 
+               [alt]="teamName"
+               class="team-logo-small">
+          <span class="team-name-text">{{ teamName }}</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-grid">
+          <!-- Overall Rating with Standard Blue Circle -->
+          <div class="stat-item overall-rating">
+            <div class="stat-label">Overall</div>
+            <div class="overall-container">
+              <div class="circular-progress" 
+                   [style.background]="'conic-gradient(#0d6efd 0deg ' + ((playerAttributes['OVERALL'] || 50) * 3.6) + 'deg, #e9ecef ' + ((playerAttributes['OVERALL'] || 50) * 3.6) + 'deg 360deg)'">
+                <div class="overall-value" style="color: #0d6efd">
+                  {{ playerAttributes['OVERALL'] || 50 }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Age</div>
+            <div class="stat-value">{{ player.age }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Height</div>
+            <div class="stat-value">{{ player.height }}"</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Weight</div>
+            <div class="stat-value">{{ player.weight }} lbs</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Hand</div>
+            <div class="stat-value">{{ player.handedness }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player Attributes Section - Full Width Below Header -->
+  <div class="attributes-section-full">
+    <h5 class="attributes-title">
+      Player Attributes
+    </h5>
+    
+    <!-- Skater Attributes -->
+    <div *ngIf="player.position !== 'G'" class="table-responsive">
+      <table class="table table-bordered attributes-table">
+        <thead>
+          <tr>
+            <th *ngFor="let attr of skaterAttributeOrder">{{ attr }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td *ngFor="let attr of skaterAttributeOrder" 
+                [ngClass]="{ 'table-success': isAttributeAffected(attr) }">
+              <div class="attribute-cell">
+                <span class="attribute-value">{{ playerAttributes[attr] || 0 }}</span>
+                <span *ngIf="isAttributeAffected(attr) && !trainingProcessed" class="training-impact">
+                  +{{ getAttributeDelta() }}
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Goalie Attributes -->
+    <div *ngIf="player.position === 'G'" class="table-responsive">
+      <table class="table table-bordered attributes-table">
+        <thead>
+          <tr>
+            <th *ngFor="let attr of goalieAttributeOrder">{{ attr }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td *ngFor="let attr of goalieAttributeOrder"
+                [ngClass]="{ 'table-success': isAttributeAffected(attr) }">
+              <div class="attribute-cell">
+                <span class="attribute-value">{{ playerAttributes[attr] || 0 }}</span>
+                <span *ngIf="isAttributeAffected(attr) && !trainingProcessed" class="training-impact">
+                  +{{ getAttributeDelta() }}
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Training Impact Legend -->
+    <div *ngIf="tempTrainingType && !trainingProcessed" class="training-legend">
+      <span class="legend-badge">Enhanced</span>
+      <small>
+        <strong>{{ tempTrainingType }}</strong> will improve the highlighted attributes by 
+        <strong>{{ getAttributeDelta() > 0 ? '+' : '' }}{{ getAttributeDelta() }} points</strong>
+      </small>
+    </div>
+
+    <!-- Processed Training Notice -->
+    <div *ngIf="trainingProcessed && trainingType" class="training-legend">
+      <span class="legend-badge bg-success">Applied</span>
+      <small>
+        <strong>{{ trainingType }}</strong> has been processed and applied to your player's attributes.
+      </small>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="mb-4">
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentView === 'overview'"
+           (click)="onTabChange('overview')">
+          <i class="fas fa-user me-1"></i> Overview
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentView === 'history'"
+           (click)="onTabChange('history')">
+          <i class="fas fa-history me-1"></i> Career History
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentView === 'stats'"
+           (click)="onTabChange('stats')">
+          <i class="fas fa-chart-line me-1"></i> Game Stats
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentView === 'trainings'"
+           (click)="onTabChange('trainings')">
+          <i class="fas fa-dumbbell me-1"></i> Training History
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Overview Tab -->
+  <div *ngIf="currentView === 'overview'">
+    <div class="row">
+      <!-- Player Details -->
+      <div class="col-lg-6">
+        <div class="stat-card">
+          <h5 class="mb-3">Player Details</h5>
+          <div class="row">
+            <div class="col-6 mb-3">
+              <div class="stat-label">Call Name</div>
+              <div class="stat-value">{{ player.callName || 'N/A' }}</div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="stat-label">Origin</div>
+              <div class="stat-value">{{ player.origin || 'N/A' }}</div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="stat-label">Fighting</div>
+              <div class="stat-value">{{ player.fightTendency || 'N/A' }}</div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="stat-label">Race</div>
+              <div class="stat-value">{{ player.race || 'N/A' }}</div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="stat-label">Hair</div>
+              <div class="stat-value">{{ player.hair || 'N/A' }}</div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="stat-label">Beard</div>
+              <div class="stat-value">{{ player.beard || 'N/A' }}</div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="stat-label">Stick Tape</div>
+              <div class="stat-value">{{ player.stickTapeColor || 'N/A' }}</div>
+            </div>
+            <div class="col-6 mb-3">
+              <div class="stat-label">Twitch</div>
+              <div class="stat-value">{{ player.twitch || 'N/A' }}</div>
+            </div>
+            <div class="col-12 mb-3">
+              <div class="stat-label">Referral</div>
+              <div class="stat-value">{{ player.referralSource || 'N/A' }}</div>
+            </div>
+            <div class="col-12">
+              <div class="stat-label">Invited By</div>
+              <div class="stat-value">{{ player.invitedBy || 'N/A' }}</div>
+            </div>
+          </div>
+          
+          <!-- Retire Button -->
+          <div class="mt-4 pt-3 border-top">
+            <button class="btn btn-danger w-100" (click)="showRetireModal = true">
+              <i class="fas fa-sign-out-alt me-2"></i>Retire Player
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Training Section -->
+      <div class="col-lg-6">
+        <div class="training-section">
+          <h5 class="training-title">
+            Weekly Training Program - Week {{ currentProgressionWeek }}
+            <span class="badge ms-2" 
+                  [class.bg-success]="progressionsOpen"
+                  [class.bg-danger]="!progressionsOpen">
+              {{ progressionsOpen ? 'Open' : 'Closed' }}
+            </span>
+          </h5>
+
+          <!-- Progressions Closed Message -->
+          <div *ngIf="!progressionsOpen" class="alert alert-warning">
+            <i class="fas fa-lock me-2"></i>
+            <strong>Training Submissions Closed</strong><br>
+            Training submissions are currently closed for Week {{ currentProgressionWeek }}. 
+            Please wait for the next progression period to open.
+          </div>
+
+          <!-- Training Already Processed Message -->
+          <div *ngIf="trainingProcessed" class="alert alert-info">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Training Processed</strong><br>
+            Your training for Week {{ currentProgressionWeek }} has been processed and applied to your player. 
+            You cannot modify processed training. Please wait for the next week to submit new training.
+          </div>
+
+          <!-- Already Submitted This Week Message -->
+          <div *ngIf="hasSubmittedThisWeek && !trainingSubmitted && !trainingProcessed" class="alert alert-info">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Training Already Submitted</strong><br>
+            You have already submitted training for Week {{ currentProgressionWeek }}. 
+            You can only submit one training per week.
+          </div>
+
+          <!-- Training Submitted State -->
+          <div *ngIf="trainingSubmitted" class="training-submitted">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-1 text-success">✅ Training Submitted for Week {{ currentProgressionWeek }}</h6>
+                <p class="mb-1"><strong>Program:</strong> {{ trainingType }}</p>
+                <p class="mb-0">
+                  <strong>Status:</strong> 
+                  <span class="badge" 
+                        [class.bg-warning]="trainingStatus === 'pending'"
+                        [class.bg-success]="trainingStatus === 'processed'">
+                    {{ trainingStatus | titlecase }}
+                  </span>
+                  <span *ngIf="trainingStatus === 'processed'" class="ms-2 text-success">
+                    <i class="fas fa-lock me-1"></i>Locked
+                  </span>
+                </p>
+              </div>
+              <button class="btn btn-warning" 
+                      (click)="trainingSubmitted = false"
+                      [disabled]="!canEditTraining()"
+                      [title]="trainingProcessed ? 'Cannot edit processed training' : (!progressionsOpen ? 'Progressions are closed' : 'Edit training')">
+                <i class="fas fa-edit me-1"></i> 
+                {{ trainingProcessed ? 'Locked' : 'Edit Training' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Training Selection Form -->
+          <div *ngIf="!trainingSubmitted && progressionsOpen && !hasSubmittedThisWeek && !trainingProcessed" class="training-form">
+            <label for="trainingSelect" class="form-label fw-bold">Select Training Program for Week {{ currentProgressionWeek }}</label>
+            <select class="form-select mb-3" 
+                    [(ngModel)]="tempTrainingType" 
+                    name="training" 
+                    (change)="onTrainingChange()"
+                    [disabled]="!progressionsOpen || trainingProcessed"
+                    id="trainingSelect">
+              <option value="">-- Choose Your Training --</option>
+              <option *ngFor="let option of trainingOptions" [value]="option">
+                {{ option }}
+              </option>
+            </select>
+            
+            <button class="btn btn-primary" 
+                    (click)="submitTraining()"
+                    [disabled]="!tempTrainingType || !progressionsOpen || trainingProcessed">
+              <i class="fas fa-paper-plane me-1"></i> Submit Training for Week {{ currentProgressionWeek }}
+            </button>
+          </div>
+
+          <!-- Secondary Position Progress -->
+          <div *ngIf="trainingType === 'Learn Secondary Position'" class="progress-indicator">
+            <i class="fas fa-chart-line me-2"></i>
+            Secondary Position Progress: {{ secondaryProgress }}/3 weeks completed
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Career History Tab -->
+  <div *ngIf="currentView === 'history'">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="stat-card">
+          <h5 class="mb-3">
+            <i class="fas fa-building me-2"></i>Team History
+          </h5>
+          <div *ngFor="let team of getTeamHistory()" class="mb-3 p-3 border rounded team-history-item">
+            <div class="d-flex align-items-center mb-2">
+              <img *ngIf="team.teamLogo" 
+                   [src]="team.teamLogo" 
+                   [alt]="team.teamName"
+                   class="team-logo-history me-3">
+              <div class="flex-grow-1">
+                <h6 class="mb-1">{{ team.teamName }}</h6>
+                <small class="text-muted">
+                  {{ team.action | titlecase }} on {{ team.joinDate | date:'mediumDate' }}
+                </small>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="getTeamHistory().length === 0" class="text-muted text-center py-3">
+            No team history available
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="stat-card">
+          <h5 class="mb-3">
+            <i class="fas fa-timeline me-2"></i>Career Timeline
+          </h5>
+          <div class="timeline">
+            <div *ngFor="let event of playerHistory" class="timeline-item mb-3 p-3 border-start border-3 border-primary">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center mb-2">
+                    <img *ngIf="event.teamLogo" 
+                         [src]="event.teamLogo" 
+                         [alt]="event.teamName"
+                         class="team-logo-timeline me-2">
+                    <div>
+                      <h6 class="mb-1">{{ event.action | titlecase }}</h6>
+                      <p class="mb-1 text-muted">{{ event.teamName }}</p>
+                    </div>
+                  </div>
+                  <small class="text-muted">{{ event.timestamp | date:'medium' }}</small>
+                </div>
+                <span class="badge bg-primary">{{ event.action }}</span>
+              </div>
+              <p *ngIf="event.details" class="mt-2 mb-0 small">{{ event.details }}</p>
+            </div>
+          </div>
+          <div *ngIf="playerHistory.length === 0" class="text-muted text-center py-3">
+            No career history available
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Stats Tab -->
+  <div *ngIf="currentView === 'stats'">
+    <div class="stat-card mb-4">
+      <h5 class="mb-3">
+        <i class="fas fa-trophy me-2"></i>Career Totals
+      </h5>
+      <div class="row text-center">
+        <div class="col-md-2">
+          <div class="stat-item">
+            <div class="stat-label">Games</div>
+            <div class="stat-value">{{ getTotalStats().games }}</div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-item">
+            <div class="stat-label">Goals</div>
+            <div class="stat-value">{{ getTotalStats().goals }}</div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-item">
+            <div class="stat-label">Assists</div>
+            <div class="stat-value">{{ getTotalStats().assists }}</div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-item">
+            <div class="stat-label">Points</div>
+            <div class="stat-value">{{ getTotalStats().points }}</div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-item">
+            <div class="stat-label">PIM</div>
+            <div class="stat-value">{{ getTotalStats().pim }}</div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <div class="stat-item">
+            <div class="stat-label">Hits</div>
+            <div class="stat-value">{{ getTotalStats().hits }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <h5 class="mb-3">
+        <i class="fas fa-list me-2"></i>Game by Game Stats
+      </h5>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Team</th>
+              <th>vs</th>
+              <th>G</th>
+              <th>A</th>
+              <th>PTS</th>
+              <th>+/-</th>
+              <th>PIM</th>
+              <th>Hits</th>
+              <th>Shots</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let game of gameStats">
+              <td>{{ game.date | date:'shortDate' }}</td>
+              <td>{{ game.teamName }}</td>
+              <td>{{ game.isHome ? 'vs' : '@' }} {{ game.opponent }}</td>
+              <td>{{ game.goals || 0 }}</td>
+              <td>{{ game.assists || 0 }}</td>
+              <td>{{ (game.goals || 0) + (game.assists || 0) }}</td>
+              <td>{{ game.plusMinus || 0 }}</td>
+              <td>{{ game.pim || 0 }}</td>
+              <td>{{ game.hits || 0 }}</td>
+              <td>{{ game.shots || 0 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="gameStats.length === 0" class="text-muted text-center py-3">
+        No game stats available
+      </div>
+    </div>
+  </div>
+
+  <!-- Training History Tab -->
+  <div *ngIf="currentView === 'trainings'">
+    <div class="stat-card">
+      <h5 class="mb-3">
+        <i class="fas fa-dumbbell me-2"></i>Training History
+      </h5>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Training Program</th>
+              <th>Status</th>
+              <th>Week</th>
+              <th>Season</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let training of trainingHistory">
+              <td>{{ training.timestamp | date:'mediumDate' }}</td>
+              <td>{{ training.training }}</td>
+              <td>
+                <span class="badge" 
+                      [class.bg-warning]="training.status === 'pending'"
+                      [class.bg-success]="training.status === 'processed'">
+                  {{ training.status | titlecase }}
+                </span>
+                <span *ngIf="training.status === 'processed'" class="ms-1">
+                  <i class="fas fa-lock text-success" title="Training has been processed and locked"></i>
+                </span>
+              </td>
+              <td>{{ training.week || 'N/A' }}</td>
+              <td>{{ training.season || 'N/A' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="trainingHistory.length === 0" class="text-muted text-center py-3">
+        No training history available
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Retirement Confirmation Modal -->
+<div class="modal fade show" 
+     *ngIf="showRetireModal" 
+     tabindex="-1" 
+     style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle me-2"></i>Retire Player
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showRetireModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning">
+          <strong>Warning:</strong> This action cannot be undone. Your player will be permanently retired from the league.
+        </div>
+        <p>Are you sure you want to retire <strong>{{ player.firstName }} {{ player.lastName }}</strong>?</p>
+        <p>To confirm, please type <strong>RETIRE</strong> in the box below:</p>
+        <input type="text" 
+               class="form-control" 
+               [(ngModel)]="retireConfirmation" 
+               placeholder="Type RETIRE to confirm">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showRetireModal = false">Cancel</button>
+        <button type="button" 
+                class="btn btn-danger" 
+                (click)="retirePlayer()"
+                [disabled]="retireConfirmation !== 'RETIRE'">
+          <i class="fas fa-sign-out-alt me-1"></i>Retire Player
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

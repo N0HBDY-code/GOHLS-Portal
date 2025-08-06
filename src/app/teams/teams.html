@@ -1,0 +1,251 @@
+<div class="container mt-4">
+  <!-- Conference/Division Management -->
+  <div *ngIf="canManageTeams" class="mb-4">
+    <div class="d-flex gap-2 mb-3">
+      <button class="btn btn-primary" (click)="showAddTeamForm = !showAddTeamForm">
+        {{ showAddTeamForm ? 'Hide Form' : 'Add New Team' }}
+      </button>
+      <button class="btn btn-outline-primary" (click)="showAddConferenceForm = !showAddConferenceForm">
+        {{ showAddConferenceForm ? 'Hide' : 'Add Conference' }}
+      </button>
+      <button class="btn btn-outline-primary" (click)="showAddDivisionForm = !showAddDivisionForm">
+        {{ showAddDivisionForm ? 'Hide' : 'Add Division' }}
+      </button>
+    </div>
+
+    <!-- Add Conference Form -->
+    <div class="card mb-3" *ngIf="showAddConferenceForm">
+      <div class="card-body">
+        <h5 class="card-title">Add New Conference to {{ currentLeagueView | titlecase }} League</h5>
+        <div class="input-group">
+          <input type="text" class="form-control" [(ngModel)]="newConferenceName" placeholder="Conference Name">
+          <button class="btn btn-primary" (click)="addConference()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Division Form -->
+    <div class="card mb-3" *ngIf="showAddDivisionForm">
+      <div class="card-body">
+        <h5 class="card-title">Add New Division to {{ currentLeagueView | titlecase }} League</h5>
+        <div class="mb-3">
+          <select class="form-select" [(ngModel)]="selectedConferenceForDivision">
+            <option value="">Select Conference</option>
+            <option *ngFor="let conf of conferences" [value]="conf.name">{{ conf.name }}</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <input type="text" class="form-control" [(ngModel)]="newDivisionName" placeholder="Division Name">
+          <button class="btn btn-primary" (click)="addDivision()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Team Form -->
+    <div class="card mt-3" *ngIf="showAddTeamForm">
+      <div class="card-header">
+        <h5 class="mb-0">Add New Team</h5>
+      </div>
+      <div class="card-body">
+        <form (ngSubmit)="addTeam()">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">City</label>
+              <input type="text" class="form-control" [(ngModel)]="city" name="city" required />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Mascot</label>
+              <input type="text" class="form-control" [(ngModel)]="mascot" name="mascot" required />
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">League</label>
+              <select class="form-select" [(ngModel)]="selectedLeague" name="selectedLeague" (change)="onLeagueChange()" required>
+                <option value="">-- Select League --</option>
+                <option value="major">Major League</option>
+                <option value="minor">Minor League</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Conference</label>
+              <select class="form-select" [(ngModel)]="selectedConference" name="selectedConference" required>
+                <option value="">-- Select Conference --</option>
+                <option *ngFor="let conf of availableConferences" [value]="conf.name">{{ conf.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3" *ngIf="selectedConference">
+              <label class="form-label">Division</label>
+              <select class="form-select" [(ngModel)]="selectedDivision" name="selectedDivision" required>
+                <option value="">-- Select Division --</option>
+                <ng-container *ngFor="let conf of availableConferences">
+                  <ng-container *ngIf="conf.name === selectedConference">
+                    <option *ngFor="let div of conf.divisions" [value]="div">{{ div }}</option>
+                  </ng-container>
+                </ng-container>
+              </select>
+            </div>
+            <div class="col-md-12 mb-3">
+              <div class="row">
+                <div class="col-md-4">
+                  <label class="form-label">Primary Color</label>
+                  <input type="color" class="form-control form-control-color w-100" [(ngModel)]="primaryColor" name="primaryColor" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Secondary Color</label>
+                  <input type="color" class="form-control form-control-color w-100" [(ngModel)]="secondaryColor" name="secondaryColor" required />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Tertiary Color</label>
+                  <input type="color" class="form-control form-control-color w-100" [(ngModel)]="tertiaryColor" name="tertiaryColor" required />
+                </div>
+              </div>
+            </div>
+            <div class="col-md-12 mb-3">
+              <label class="form-label">Team Logo <small class="text-muted">(Optional)</small></label>
+              <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*" />
+              <small class="form-text text-muted">You can add a logo now or upload one later when editing the team.</small>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Add Team</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- League Tabs -->
+  <div class="mb-4">
+    <ul class="nav nav-tabs">
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentLeagueView === 'major'"
+           (click)="currentLeagueView = 'major'">
+          <i class="fas fa-trophy me-1"></i> Major League
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" 
+           [class.active]="currentLeagueView === 'minor'"
+           (click)="currentLeagueView = 'minor'">
+          <i class="fas fa-medal me-1"></i> Minor League
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Display Teams by League, Conference & Division -->
+  <div *ngFor="let conf of conferences" class="mb-5">
+    <div class="d-flex align-items-center justify-content-between">
+      <h4 class="text-primary">{{ conf.name }}</h4>
+      <button *ngIf="canManageTeams" 
+              class="btn btn-sm btn-outline-danger"
+              (click)="deleteConference(conf.name)">
+        Delete Conference
+      </button>
+    </div>
+    <div *ngFor="let div of conf.divisions" class="mb-3 ps-3">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5>{{ div }}</h5>
+        <button *ngIf="canManageTeams"
+                class="btn btn-sm btn-outline-danger"
+                (click)="deleteDivision(conf.name, div)">
+          Delete Division
+        </button>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-3 mb-3" *ngFor="let team of getTeamsByDivisionAndLeague(conf.name, div, currentLeagueView)">
+          <div class="team-card" 
+               [style.border-color]="team.primaryColor || '#000000'"
+               (click)="viewTeam(team.id!)">
+            <div class="team-logo-container">
+              <img *ngIf="team.logoUrl"
+                   [src]="team.logoUrl"
+                   class="team-logo"
+                   alt="Team Logo" />
+              <div *ngIf="!team.logoUrl" class="no-logo-placeholder">
+                <i class="fas fa-hockey-puck fa-3x text-muted"></i>
+              </div>
+            </div>
+            <div class="team-info">
+              <h6 class="team-name">{{ team.city }} {{ team.mascot }}</h6>
+              <div class="team-division">{{ team.division }}</div>
+            </div>
+          </div>
+          <div class="text-center mt-2" *ngIf="canManageTeams">
+            <button class="btn btn-sm btn-outline-secondary me-2" (click)="openEditTeamModal(team); $event.stopPropagation();">Edit</button>
+            <button class="btn btn-sm btn-outline-danger" (click)="deleteTeam(team.id!); $event.stopPropagation();">Delete</button>
+          </div>
+        </div>
+        <!-- Show message if no teams in this division -->
+        <div *ngIf="getTeamsByDivisionAndLeague(conf.name, div, currentLeagueView).length === 0" class="col-12">
+          <div class="text-center text-muted py-4">
+            <i class="fas fa-plus-circle fa-2x mb-2"></i>
+            <p>No teams in {{ div }} yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Team Modal -->
+  <div class="modal fade show" tabindex="-1" *ngIf="editTeamData as team" style="display: block; background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Team</h5>
+          <button type="button" class="btn-close" (click)="editTeamData = undefined"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">City</label>
+            <input type="text" class="form-control" [(ngModel)]="team.city" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mascot</label>
+            <input type="text" class="form-control" [(ngModel)]="team.mascot" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">League</label>
+            <select class="form-select" [(ngModel)]="team.league">
+              <option value="major">Major League</option>
+              <option value="minor">Minor League</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Conference</label>
+            <select class="form-select" [(ngModel)]="team.conference">
+              <option *ngFor="let conf of (team.league === 'minor' ? minorLeagueConferences : majorLeagueConferences)" [value]="conf.name">{{ conf.name }}</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Division</label>
+            <select class="form-select" [(ngModel)]="team.division">
+              <option *ngFor="let div of getDivisionsForConference(team.conference)" [value]="div">{{ div }}</option>
+            </select>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Primary Color</label>
+              <input type="color" class="form-control form-control-color w-100" [(ngModel)]="team.primaryColor" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Secondary Color</label>
+              <input type="color" class="form-control form-control-color w-100" [(ngModel)]="team.secondaryColor" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Tertiary Color</label>
+              <input type="color" class="form-control form-control-color w-100" [(ngModel)]="team.tertiaryColor" />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Update Logo</label>
+            <input type="file" class="form-control" (change)="onEditLogoSelected($event)" accept="image/*" />
+            <small class="form-text text-muted">Leave empty to keep the current logo.</small>
+          </div>        
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="editTeamData = undefined">Cancel</button>
+          <button class="btn btn-primary" (click)="saveTeamChanges()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,458 @@
+<p>progression-tracker works!</p>
+<div class="container mt-4">
+  <!-- Page Title -->
+  <h2 class="page-title">
+    <i class="fas fa-chart-line me-2"></i>Progression Tracker
+  </h2>
+
+  <!-- Current Progression System Settings -->
+  <div class="card settings-card mb-4">
+    <div class="card-header">
+      <h4>
+        <div class="settings-icon">
+          <i class="fas fa-cog"></i>
+        </div>
+        Current Progression Settings (What Players See)
+      </h4>
+    </div>
+    <div class="card-body">
+      <div class="row align-items-end">
+        <!-- Week Management - Only for Developers/Commissioners -->
+        <div class="col-md-4" *ngIf="canManageWeeks">
+          <label class="form-label">
+            <i class="fas fa-calendar-week me-1"></i>Current Progression Week
+          </label>
+          
+          <!-- Display Mode -->
+          <div *ngIf="!isEditingWeek" class="d-flex align-items-center gap-2">
+            <div class="week-display">
+              <span class="badge bg-primary fs-6 px-3 py-2">Week {{ currentProgressionWeek }}</span>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" 
+                    (click)="startEditingWeek()"
+                    title="Edit week number">
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+
+          <!-- Edit Mode -->
+          <div *ngIf="isEditingWeek" class="d-flex align-items-center gap-2">
+            <input type="number" 
+                   class="form-control form-control-sm" 
+                   style="width: 80px;"
+                   [(ngModel)]="tempProgressionWeek"
+                   min="1" 
+                   max="100"
+                   [disabled]="weekSaving">
+            <button class="btn btn-success btn-sm" 
+                    (click)="saveProgressionWeek()"
+                    [disabled]="weekSaving || tempProgressionWeek < 1"
+                    title="Save week number">
+              <span *ngIf="weekSaving" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!weekSaving" class="fas fa-check"></i>
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" 
+                    (click)="cancelEditingWeek()"
+                    [disabled]="weekSaving"
+                    title="Cancel editing">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Read-only week display for non-managers -->
+        <div class="col-md-4" *ngIf="!canManageWeeks">
+          <label class="form-label">
+            <i class="fas fa-calendar-week me-1"></i>Current Progression Week
+          </label>
+          <div class="week-display">
+            <span class="badge bg-primary fs-6 px-3 py-2">Week {{ currentProgressionWeek }}</span>
+            <small class="d-block text-muted mt-1">
+              <i class="fas fa-lock me-1"></i>Week management restricted to developers/commissioners
+            </small>
+          </div>
+        </div>
+
+        <!-- Progressions Open/Closed Toggle -->
+        <div class="col-md-4" *ngIf="canManageWeeks">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="progressionToggle"
+                   [(ngModel)]="progressionsOpen"
+                   (change)="toggleProgressionsOpen()">
+            <label class="form-check-label" for="progressionToggle">
+              <i class="fas fa-toggle-on me-1"></i>
+              Progressions {{ progressionsOpen ? 'Open' : 'Closed' }}
+            </label>
+          </div>
+        </div>
+
+        <!-- Read-only status for non-managers -->
+        <div class="col-md-4" *ngIf="!canManageWeeks">
+          <label class="form-label">
+            <i class="fas fa-flag me-1"></i>Progression Status
+          </label>
+          <div class="status-indicator">
+            <div class="status-dot" [class.processed]="progressionsOpen" [class.na]="!progressionsOpen"></div>
+            <span class="badge" 
+                  [class.bg-success]="progressionsOpen"
+                  [class.bg-secondary]="!progressionsOpen">
+              {{ progressionsOpen ? 'OPEN' : 'CLOSED' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Status Display -->
+        <div class="col-md-4">
+          <div class="status-indicator">
+            <div class="status-dot" [class.processed]="progressionsOpen" [class.na]="!progressionsOpen"></div>
+            <span class="badge" 
+                  [class.bg-success]="progressionsOpen"
+                  [class.bg-secondary]="!progressionsOpen">
+              {{ progressionsOpen ? 'ACCEPTING SUBMISSIONS' : 'SUBMISSIONS CLOSED' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Permission Notice -->
+      <div *ngIf="!canManageWeeks" class="alert alert-info mt-3">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Note:</strong> You can view and manage player progressions, but only developers and commissioners can change the current progression week and open/close submissions.
+      </div>
+    </div>
+  </div>
+
+  <!-- Management View Settings -->
+  <div class="card management-card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-eye me-1"></i>Management View Settings
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <label for="viewingWeekSelect" class="form-label">
+            <i class="fas fa-search me-1"></i>View Progressions for Week
+          </label>
+          <input type="number" 
+                 id="viewingWeekSelect"
+                 class="form-control"
+                 [(ngModel)]="viewingWeek"
+                 (change)="onViewingWeekChange()"
+                 min="1" 
+                 max="100"
+                 placeholder="Enter week number">
+        </div>
+        <div class="col-md-6">
+          <div class="alert alert-info mb-0">
+            <i class="fas fa-info-circle me-1"></i>
+            <strong>Note:</strong> You are viewing Week {{ viewingWeek }} progressions. 
+            Players are currently on Week {{ currentProgressionWeek }}.
+            <span *ngIf="viewingWeek !== currentProgressionWeek" class="d-block mt-1">
+              <small class="text-muted">
+                <i class="fas fa-history me-1"></i>Viewing historical data
+              </small>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- Team Selection -->
+  <div class="card team-selection-card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-users me-1"></i>Team Selection
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <label for="teamSelect" class="form-label">Select Team to Manage</label>
+          <select id="teamSelect" class="form-select" [(ngModel)]="selectedTeamId" (change)="loadRoster()">
+            <option value="">-- Choose a Team --</option>
+            <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
+          </select>
+        </div>
+        <div class="col-md-4 text-end">
+          <div *ngIf="loading" class="d-flex align-items-center justify-content-end">
+            <div class="spinner-border me-2" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <span class="text-muted">Loading roster...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Info Display -->
+  <div *ngIf="selectedTeam" class="team-info">
+    <div class="d-flex align-items-center gap-3">
+      <img *ngIf="selectedTeam.logoUrl"
+           [src]="selectedTeam.logoUrl"
+           alt="Team Logo"
+           width="60"
+           height="60"
+           class="team-logo" />
+      <div>
+        <h4 class="team-name mb-1">{{ selectedTeam.name }}</h4>
+        <p class="text-muted mb-0">
+          <i class="fas fa-users me-1"></i>{{ roster.length }} players
+          <span class="mx-2">•</span>
+          <i class="fas fa-calendar me-1"></i>Viewing Week {{ viewingWeek }}
+          <span *ngIf="viewingWeek !== currentProgressionWeek" class="badge bg-warning text-dark ms-2">
+            Historical
+          </span>
+          <span *ngIf="viewingWeek === currentProgressionWeek" class="badge bg-info ms-2">
+            Current
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Roster Management Table -->
+  <div *ngIf="!loading && roster.length > 0" class="card roster-card">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-clipboard-list me-1"></i>Player Progression Management - Week {{ viewingWeek }}
+      </h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th><i class="fas fa-user me-1"></i>Player Name</th>
+              <th><i class="fas fa-hashtag me-1"></i>Number</th>
+              <th><i class="fas fa-map-marker-alt me-1"></i>Position</th>
+              <th><i class="fas fa-star me-1"></i>Overall</th>
+              <th><i class="fas fa-dumbbell me-1"></i>Training Program</th>
+              <th><i class="fas fa-flag me-1"></i>Status</th>
+              <th><i class="fas fa-tools me-1"></i>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let player of roster" 
+                [class.status-processed]="player.status === 'processed'"
+                [class.status-pending]="player.status === 'pending'"
+                [class.status-na]="player.status === 'N/A'">
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="status-dot me-2" 
+                       [class.processed]="player.status === 'processed'"
+                       [class.pending]="player.status === 'pending'"
+                       [class.na]="player.status === 'N/A'"></div>
+                  <strong>{{ player.name }}</strong>
+                </div>
+              </td>
+              <td>
+                <span class="badge bg-light">#{{ player.number }}</span>
+              </td>
+              <td>
+                <span class="badge bg-primary">{{ player.position }}</span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge" 
+                        [style.background-color]="getOverallColor(player.overall)"
+                        [style.color]="player.overall >= 75 ? 'white' : 'black'">
+                    {{ player.overall }}
+                  </span>
+                  <button *ngIf="canManageOverall"
+                          class="btn btn-outline-secondary btn-sm"
+                          (click)="openOverallModal(player)"
+                          title="Edit overall rating">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                </div>
+              </td>
+              <td>
+                <span *ngIf="player.progression !== 'Not submitted'" class="text-success">
+                  <i class="fas fa-check-circle me-1"></i>{{ player.progression }}
+                </span>
+                <span *ngIf="player.progression === 'Not submitted'" class="text-muted">
+                  <i class="fas fa-minus-circle me-1"></i>Not submitted
+                </span>
+              </td>
+              <td>
+                <span class="badge" 
+                      [class.bg-secondary]="player.status === 'N/A'"
+                      [class.bg-warning]="player.status === 'pending'"
+                      [class.bg-success]="player.status === 'processed'">
+                  {{ player.status }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button class="btn btn-sm btn-success"
+                          (click)="markAsProcessed(player.id, player.progressionDocId!)"
+                          [disabled]="player.status === 'processed' || !player.progressionDocId"
+                          title="Mark as processed">
+                    <i class="fas fa-check"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-info"
+                          (click)="showAttributes(player.id, player.progression)"
+                          [disabled]="player.progression === 'Not submitted'"
+                          title="View player attributes">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger"
+                          (click)="undoProcessed(player.id, player.progressionDocId!)"
+                          [disabled]="player.status !== 'processed'"
+                          title="Undo processing">
+                    <i class="fas fa-undo"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attribute Display Table -->
+  <div *ngIf="showAttributesPlayerId" class="card mt-4">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-chart-bar me-1"></i>
+        Player Attributes: {{ getPlayerNameById(showAttributesPlayerId) }}
+      </h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th *ngFor="let attr of attributeDisplayOrder" class="text-center">{{ attr }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td *ngFor="let attr of attributeDisplayOrder" 
+                  class="text-center"
+                  [class.text-success]="affectedAttributes.includes(attr)"
+                  [class.fw-bold]="affectedAttributes.includes(attr)">
+                <span *ngIf="affectedAttributes.includes(attr)" class="badge bg-success me-1">
+                  ↑
+                </span>
+                {{ selectedPlayerAttributes[attr] !== undefined ? selectedPlayerAttributes[attr] : '-' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer">
+        <small class="text-muted">
+          <i class="fas fa-info-circle me-1"></i>
+          <span class="badge bg-success me-1">↑</span>
+          Highlighted attributes will be affected by the selected training program
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State Messages -->
+  <div *ngIf="!loading && roster.length === 0 && selectedTeamId" class="card">
+    <div class="card-body text-center py-5">
+      <i class="fas fa-users fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">No Players Found</h5>
+      <p class="text-muted">This team doesn't have any players in their roster yet.</p>
+    </div>
+  </div>
+
+  <div *ngIf="!selectedTeamId" class="card">
+    <div class="card-body text-center py-5">
+      <i class="fas fa-hand-pointer fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">Select a Team</h5>
+      <p class="text-muted">Choose a team from the dropdown above to manage player progressions.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Overall Rating Management Modal -->
+<div class="modal fade show" 
+     *ngIf="showOverallModal" 
+     tabindex="-1" 
+     style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-star me-2"></i>Edit Overall Rating
+        </h5>
+        <button type="button" class="btn-close" (click)="closeOverallModal()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Modal Messages -->
+        <div *ngIf="overallError" class="alert alert-danger">{{ overallError }}</div>
+        <div *ngIf="overallSuccess" class="alert alert-success">{{ overallSuccess }}</div>
+
+        <div *ngIf="selectedPlayerForOverall">
+          <div class="mb-3">
+            <h6>Player: {{ selectedPlayerForOverall.name }}</h6>
+            <p class="text-muted mb-0">
+              {{ selectedPlayerForOverall.position }} • #{{ selectedPlayerForOverall.number }}
+            </p>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">
+              <i class="fas fa-star me-1"></i>Current Overall Rating
+            </label>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge fs-6 px-3 py-2" 
+                    [style.background-color]="getOverallColor(selectedPlayerForOverall.overall)"
+                    [style.color]="selectedPlayerForOverall.overall >= 75 ? 'white' : 'black'">
+                {{ selectedPlayerForOverall.overall }}
+              </span>
+              <span class="text-muted">→</span>
+              <span class="badge fs-6 px-3 py-2" 
+                    [style.background-color]="getOverallColor(newOverallValue)"
+                    [style.color]="newOverallValue >= 75 ? 'white' : 'black'">
+                {{ newOverallValue }}
+              </span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="overallInput" class="form-label">
+              <i class="fas fa-edit me-1"></i>New Overall Rating (40-99)
+            </label>
+            <input type="number" 
+                   id="overallInput"
+                   class="form-control" 
+                   [(ngModel)]="newOverallValue"
+                   min="40" 
+                   max="99"
+                   [disabled]="overallSaving">
+            <div class="form-text">
+              Overall rating must be between 40 and 99. This change will be applied immediately.
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Note:</strong> This will manually adjust the player's overall rating. The change will be applied immediately and visible to the player.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeOverallModal()">Cancel</button>
+        <button type="button" 
+                class="btn btn-primary" 
+                (click)="saveOverallAttribute()"
+                [disabled]="overallSaving || newOverallValue < 40 || newOverallValue > 99">
+          <span *ngIf="overallSaving" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!overallSaving" class="fas fa-save me-1"></i>Update Overall Rating
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
