@@ -123,7 +123,7 @@
                 </div>
                 <select class="form-select form-select-sm" 
                         [value]="getTeamPlayoffStatus(team.id)"
-                  (change)="updateTeamPlayoffStatus(team.id, $event)">
+                        (change)="updateTeamPlayoffStatus(team.id, $event)">
                   <option value="none">No Status</option>
                   <option value="league">League Championship Clinched (P)</option>
                   <option value="conference">Conference Championship Clinched (z)</option>
