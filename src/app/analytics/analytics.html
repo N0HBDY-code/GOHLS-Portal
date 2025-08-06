@@ -123,7 +123,7 @@
                 </div>
                 <select class="form-select form-select-sm" 
                         [value]="getTeamPlayoffStatus(team.id)"
-                        (change)="updateTeamPlayoffStatus(team.id, $event)">
+                        (change)="updateTeamPlayoffStatus(team.id, $any($event.target).value)">
                   <option value="none">No Status</option>
                   <option value="league">League Championship Clinched (P)</option>
                   <option value="conference">Conference Championship Clinched (z)</option>
@@ -138,204 +138,187 @@
       </div>
     </div>
 
-    <!-- Division View -->
-    <div *ngIf="standingsViewType === 'division'">
-      <div *ngFor="let conference of conferences" class="mb-5">
-        <h4 class="text-primary mb-3">{{ conference.name }}</h4>
-        
-        <div *ngFor="let division of conference.divisions" class="mb-4">
-          <h5 class="mb-3">{{ division }}</h5>
-          
-          <div class="table-responsive">
-            <table class="table table-striped table-hover">
-              <thead class="table-dark">
-                <tr>
-                  <th>Rank</th>
-                  <th>Team</th>
-                  <th>GP</th>
-                  <th>W</th>
-                  <th>L</th>
-                  <th>OTL</th>
-                  <th>PTS</th>
-                  <th>GF</th>
-                  <th>GA</th>
-                  <th>DIFF</th>
-                  <th>PCT</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let team of getStandingsForDivision(conference.name, division); let i = index"
-                    [ngClass]="getPlayoffStatusClass(team)">
-                  <td class="fw-bold">{{ i + 1 }}</td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <img *ngIf="team.logoUrl" 
-                           [src]="team.logoUrl" 
-                           [alt]="team.name"
-                           class="team-logo-small me-2">
-                      <span class="fw-semibold">{{ team.name }}</span>
-                      <span *ngIf="getPlayoffStatusBadge(team) as badge" 
-                            [ngClass]="badge.class" 
-                            class="ms-2">{{ badge.text }}</span>
-                    </div>
-                  </td>
-                  <td>{{ team.gamesPlayed }}</td>
-                  <td>{{ team.wins }}</td>
-                  <td>{{ team.losses }}</td>
-                  <td>{{ team.overtimeLosses }}</td>
-                  <td class="fw-bold">{{ team.points }}</td>
-                  <td>{{ team.goalsFor }}</td>
-                  <td>{{ team.goalsAgainst }}</td>
-                  <td [class.text-success]="team.goalDifferential > 0"
-                      [class.text-danger]="team.goalDifferential < 0">
-                    {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
-                  </td>
-                  <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <!-- No teams message -->
-          <div *ngIf="getStandingsForDivision(conference.name, division).length === 0" 
-               class="text-center text-muted py-4">
-            <i class="fas fa-info-circle me-2"></i>No teams in {{ division }}
-          </div>
-        </div>
+    <!-- Loading Indicator -->
+    <div *ngIf="loadingStandings" class="text-center py-4">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading standings...</span>
       </div>
     </div>
 
-    <!-- Conference View -->
-    <div *ngIf="standingsViewType === 'conference'">
-      <div *ngFor="let conference of conferences" class="mb-5">
-        <div class="card">
-          <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">{{ conference.name }}</h4>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-striped table-hover mb-0">
-                <thead class="table-dark">
-                  <tr>
-                    <th>Rank</th>
-                    <th>Team</th>
-                    <th>Division</th>
-                    <th>GP</th>
-                    <th>W</th>
-                    <th>L</th>
-                    <th>OTL</th>
-                    <th>PTS</th>
-                    <th>GF</th>
-                    <th>GA</th>
-                    <th>DIFF</th>
-                    <th>PCT</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let team of getStandingsForConference(conference.name); let i = index"
-                      [ngClass]="getPlayoffStatusClass(team)">
-                    <td class="fw-bold">{{ i + 1 }}</td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <img *ngIf="team.logoUrl" 
-                             [src]="team.logoUrl" 
-                             [alt]="team.name"
-                             class="team-logo-small me-2">
-                        <span class="fw-semibold">{{ team.name }}</span>
-                        <span *ngIf="getPlayoffStatusBadge(team) as badge" 
-                              [ngClass]="badge.class" 
-                              class="ms-2">{{ badge.text }}</span>
-                      </div>
-                    </td>
-                    <td><small class="text-muted">{{ team.division }}</small></td>
-                    <td>{{ team.gamesPlayed }}</td>
-                    <td>{{ team.wins }}</td>
-                    <td>{{ team.losses }}</td>
-                    <td>{{ team.overtimeLosses }}</td>
-                    <td class="fw-bold">{{ team.points }}</td>
-                    <td>{{ team.goalsFor }}</td>
-                    <td>{{ team.goalsAgainst }}</td>
-                    <td [class.text-success]="team.goalDifferential > 0"
-                        [class.text-danger]="team.goalDifferential < 0">
-                      {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
-                    </td>
-                    <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
-                  </tr>
-                </tbody>
-              </table>
+    <!-- Division View -->
+    <div *ngIf="standingsViewType === 'division' && !loadingStandings">
+      <div *ngFor="let conference of conferences" class="mb-4">
+        <h3>{{ conference.name }}</h3>
+        <div class="row">
+          <div *ngFor="let division of conference.divisions" class="col-lg-4 mb-3">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="mb-0">{{ division }}</h5>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                  <thead>
+                    <tr>
+                      <th>Team</th>
+                      <th>GP</th>
+                      <th>W</th>
+                      <th>L</th>
+                      <th>OTL</th>
+                      <th>PTS</th>
+                      <th>GF</th>
+                      <th>GA</th>
+                      <th>DIFF</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let team of getStandingsForDivision(conference.name, division)" 
+                        [class]="getPlayoffStatusClass(team)">
+                      <td>
+                        <div class="d-flex align-items-center">
+                          <img *ngIf="team.logoUrl" [src]="team.logoUrl" class="team-logo-small me-2" alt="{{ team.name }}">
+                          <span>{{ team.name }}</span>
+                          <span *ngIf="getPlayoffStatusBadge(team) as badge" [class]="badge.class" class="ms-1">
+                            {{ badge.text }}
+                          </span>
+                        </div>
+                      </td>
+                      <td>{{ team.gamesPlayed }}</td>
+                      <td>{{ team.wins }}</td>
+                      <td>{{ team.losses }}</td>
+                      <td>{{ team.overtimeLosses }}</td>
+                      <td><strong>{{ team.points }}</strong></td>
+                      <td>{{ team.goalsFor }}</td>
+                      <td>{{ team.goalsAgainst }}</td>
+                      <td [class.text-success]="team.goalDifferential > 0" [class.text-danger]="team.goalDifferential < 0">
+                        {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Overall View -->
-    <div *ngIf="standingsViewType === 'overall'">
-      <div class="card">
-        <div class="card-header bg-success text-white">
-          <h4 class="mb-0">{{ selectedLeague | titlecase }} League Overall Standings</h4>
-        </div>
-        <div class="card-body p-0">
+    <!-- Conference View -->
+    <div *ngIf="standingsViewType === 'conference' && !loadingStandings">
+      <div *ngFor="let conference of conferences" class="mb-4">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">{{ conference.name }}</h4>
+          </div>
           <div class="table-responsive">
-            <table class="table table-striped table-hover mb-0">
-              <thead class="table-dark">
+            <table class="table table-striped mb-0">
+              <thead>
                 <tr>
                   <th>Rank</th>
                   <th>Team</th>
-                  <th>Conference</th>
-                  <th>Division</th>
                   <th>GP</th>
                   <th>W</th>
                   <th>L</th>
                   <th>OTL</th>
                   <th>PTS</th>
+                  <th>P%</th>
                   <th>GF</th>
                   <th>GA</th>
                   <th>DIFF</th>
-                  <th>PCT</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let team of getOverallStandings(); let i = index"
-                    [ngClass]="getPlayoffStatusClass(team)">
-                  <td class="fw-bold">{{ i + 1 }}</td>
+                <tr *ngFor="let team of getStandingsForConference(conference.name); let i = index" 
+                    [class]="getPlayoffStatusClass(team)">
+                  <td>{{ i + 1 }}</td>
                   <td>
                     <div class="d-flex align-items-center">
-                      <img *ngIf="team.logoUrl" 
-                           [src]="team.logoUrl" 
-                           [alt]="team.name"
-                           class="team-logo-small me-2">
-                      <span class="fw-semibold">{{ team.name }}</span>
-                      <span *ngIf="getPlayoffStatusBadge(team) as badge" 
-                            [ngClass]="badge.class" 
-                            class="ms-2">{{ badge.text }}</span>
+                      <img *ngIf="team.logoUrl" [src]="team.logoUrl" class="team-logo-small me-2" alt="{{ team.name }}">
+                      <span>{{ team.name }}</span>
+                      <span *ngIf="getPlayoffStatusBadge(team) as badge" [class]="badge.class" class="ms-1">
+                        {{ badge.text }}
+                      </span>
                     </div>
                   </td>
-                  <td><small class="text-muted">{{ team.conference }}</small></td>
-                  <td><small class="text-muted">{{ team.division }}</small></td>
                   <td>{{ team.gamesPlayed }}</td>
                   <td>{{ team.wins }}</td>
                   <td>{{ team.losses }}</td>
                   <td>{{ team.overtimeLosses }}</td>
-                  <td class="fw-bold">{{ team.points }}</td>
+                  <td><strong>{{ team.points }}</strong></td>
+                  <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
                   <td>{{ team.goalsFor }}</td>
                   <td>{{ team.goalsAgainst }}</td>
-                  <td [class.text-success]="team.goalDifferential > 0"
-                      [class.text-danger]="team.goalDifferential < 0">
+                  <td [class.text-success]="team.goalDifferential > 0" [class.text-danger]="team.goalDifferential < 0">
                     {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
                   </td>
-                  <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
                 </tr>
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall View -->
+    <div *ngIf="standingsViewType === 'overall' && !loadingStandings">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h4 class="mb-0">{{ selectedLeague | titlecase }} League Overall Standings</h4>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-striped mb-0">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>Conference</th>
+                <th>Division</th>
+                <th>GP</th>
+                <th>W</th>
+                <th>L</th>
+                <th>OTL</th>
+                <th>PTS</th>
+                <th>P%</th>
+                <th>GF</th>
+                <th>GA</th>
+                <th>DIFF</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let team of getOverallStandings(); let i = index" 
+                  [class]="getPlayoffStatusClass(team)">
+                <td>{{ i + 1 }}</td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img *ngIf="team.logoUrl" [src]="team.logoUrl" class="team-logo-small me-2" alt="{{ team.name }}">
+                    <span>{{ team.name }}</span>
+                    <span *ngIf="getPlayoffStatusBadge(team) as badge" [class]="badge.class" class="ms-1">
+                      {{ badge.text }}
+                    </span>
+                  </div>
+                </td>
+                <td><small class="text-muted">{{ team.conference }}</small></td>
+                <td><small class="text-muted">{{ team.division }}</small></td>
+                <td>{{ team.gamesPlayed }}</td>
+                <td>{{ team.wins }}</td>
+                <td>{{ team.losses }}</td>
+                <td>{{ team.overtimeLosses }}</td>
+                <td><strong>{{ team.points }}</strong></td>
+                <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
+                <td>{{ team.goalsFor }}</td>
+                <td>{{ team.goalsAgainst }}</td>
+                <td [class.text-success]="team.goalDifferential > 0" [class.text-danger]="team.goalDifferential < 0">
+                  {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         
         <!-- Playoff Legend -->
         <div class="card-footer bg-light">
           <div class="row text-center">
             <div class="col-md-2">
-              <span class="badge bg-warning text-dark me-2">P</span>
+              <span class="badge bg-success me-2">P</span>
               <small>League Championship</small>
             </div>
             <div class="col-md-2">
@@ -343,11 +326,11 @@
               <small>Conference Championship</small>
             </div>
             <div class="col-md-2">
-              <span class="badge bg-primary me-2">y</span>
+              <span class="badge bg-warning me-2">y</span>
               <small>Division Championship</small>
             </div>
             <div class="col-md-2">
-              <span class="badge bg-success me-2">x</span>
+              <span class="badge bg-primary me-2">x</span>
               <small>Playoff Spot</small>
             </div>
             <div class="col-md-2">
@@ -362,15 +345,7 @@
       </div>
     </div>
 
-    <!-- Loading indicator -->
-    <div *ngIf="loadingStandings" class="text-center my-4">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading standings...</span>
-      </div>
-      <p class="mt-2 text-muted">Loading {{ selectedLeague }} league standings...</p>
-    </div>
-
-    <!-- Cache info (for development) -->
+    <!-- Cache info -->
     <div class="mt-4 text-center">
       <small class="text-muted">
         <i class="fas fa-clock me-1"></i>
@@ -383,9 +358,10 @@
   <!-- Team Analytics View -->
   <div *ngIf="currentView === 'analytics'">
     <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">Team Analytics</h5>
+      </div>
       <div class="card-body">
-        <h5 class="card-title">Team Analytics</h5>
-        
         <div class="mb-3">
           <label for="teamSelect" class="form-label">Select Team</label>
           <select id="teamSelect" class="form-select" [(ngModel)]="selectedTeamId" (change)="onTeamSelect()">
@@ -394,17 +370,76 @@
           </select>
         </div>
 
-        <div *ngIf="selectedTeamId" class="card shadow p-4">
-          <h5 class="mb-3">Stats for {{ selectedTeamName }}</h5>
-          <ul class="list-group">
-            <li class="list-group-item">Games Played: <strong>{{ totalGames }}</strong></li>
-            <li class="list-group-item">Total Points: <strong>{{ totalPoints }}</strong></li>
-            <li class="list-group-item">Total Assists: <strong>{{ totalAssists }}</strong></li>
-            <li class="list-group-item">Total Rebounds: <strong>{{ totalRebounds }}</strong></li>
-            <li class="list-group-item">Avg Points/Game: <strong>{{ avgPoints }}</strong></li>
-            <li class="list-group-item">Avg Assists/Game: <strong>{{ avgAssists }}</strong></li>
-            <li class="list-group-item">Avg Rebounds/Game: <strong>{{ avgRebounds }}</strong></li>
-          </ul>
+        <div *ngIf="selectedTeamId" class="row">
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="fas fa-gamepad fa-2x text-primary mb-2"></i>
+                <h5 class="card-title">Total Games</h5>
+                <h2 class="text-primary">{{ totalGames }}</h2>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="fas fa-bullseye fa-2x text-success mb-2"></i>
+                <h5 class="card-title">Total Points</h5>
+                <h2 class="text-success">{{ totalPoints }}</h2>
+                <small class="text-muted">Avg: {{ avgPoints }}</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="fas fa-hands-helping fa-2x text-info mb-2"></i>
+                <h5 class="card-title">Total Assists</h5>
+                <h2 class="text-info">{{ totalAssists }}</h2>
+                <small class="text-muted">Avg: {{ avgAssists }}</small>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <i class="fas fa-undo fa-2x text-warning mb-2"></i>
+                <h5 class="card-title">Total Rebounds</h5>
+                <h2 class="text-warning">{{ totalRebounds }}</h2>
+                <small class="text-muted">Avg: {{ avgRebounds }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="selectedTeamId" class="mt-4">
+          <div class="card">
+            <div class="card-header">
+              <h6 class="mb-0">{{ selectedTeamName }} Team Statistics</h6>
+            </div>
+            <div class="card-body">
+              <div class="row text-center">
+                <div class="col-md-4">
+                  <div class="border rounded p-3">
+                    <h6 class="text-muted">Games Played</h6>
+                    <h4 class="text-primary">{{ totalGames }}</h4>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="border rounded p-3">
+                    <h6 class="text-muted">Average Points per Game</h6>
+                    <h4 class="text-success">{{ avgPoints }}</h4>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="border rounded p-3">
+                    <h6 class="text-muted">Average Assists per Game</h6>
+                    <h4 class="text-info">{{ avgAssists }}</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -441,7 +476,7 @@
         <div class="text-center mt-4">
           <button class="btn btn-success" 
                   (click)="exportSelectedGameToCSV()" 
-                  [disabled]="!selectedExportGameId">
+                  [disabled]="!selectedExportTeamId || !selectedExportGameId">
             <i class="fas fa-download me-2"></i>Export Selected Game to CSV
           </button>
         </div>

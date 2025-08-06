@@ -2,10 +2,9 @@ import { Component, OnInit, inject } from '@angular/core';
 import {
   Firestore,
   collection,
-  collectionData,
+  getDocs,
   doc,
   getDoc,
-  getDocs,
   query,
   where,
   orderBy,
@@ -59,407 +58,8 @@ interface Conference {
   selector: 'app-analytics',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  template: `
-    <div class="analytics-container">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Analytics & Standings</h2>
-        <div class="btn-group" role="group">
-          <button 
-            type="button" 
-            class="btn"
-            [class.btn-primary]="currentView === 'standings'"
-            [class.btn-outline-primary]="currentView !== 'standings'"
-            (click)="currentView = 'standings'">
-            Standings
-          </button>
-          <button 
-            type="button" 
-            class="btn"
-            [class.btn-primary]="currentView === 'analytics'"
-            [class.btn-outline-primary]="currentView !== 'analytics'"
-            (click)="currentView = 'analytics'">
-            Analytics
-          </button>
-          <button 
-            type="button" 
-            class="btn"
-            [class.btn-primary]="currentView === 'reports'"
-            [class.btn-outline-primary]="currentView !== 'reports'"
-            (click)="currentView = 'reports'">
-            Reports
-          </button>
-        </div>
-      </div>
-
-      <!-- Standings View -->
-      <div *ngIf="currentView === 'standings'" class="standings-section">
-        <div class="row mb-3">
-          <div class="col-md-4">
-            <label for="leagueSelect" class="form-label">League</label>
-            <select 
-              id="leagueSelect"
-              class="form-select" 
-              [(ngModel)]="selectedLeague" 
-              (change)="onLeagueChange()">
-              <option value="major">Major League</option>
-              <option value="minor">Minor League</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <label for="viewTypeSelect" class="form-label">View</label>
-            <select 
-              id="viewTypeSelect"
-              class="form-select" 
-              [(ngModel)]="standingsViewType" 
-              (change)="onStandingsViewChange()">
-              <option value="division">By Division</option>
-              <option value="conference">By Conference</option>
-              <option value="overall">Overall</option>
-            </select>
-          </div>
-          <div class="col-md-4 d-flex align-items-end">
-            <button class="btn btn-outline-secondary me-2" (click)="refreshStandings()" [disabled]="loadingStandings">
-              <span *ngIf="loadingStandings" class="spinner-border spinner-border-sm me-1"></span>
-              Refresh
-            </button>
-            <button *ngIf="canManagePlayoffs" class="btn btn-outline-primary" (click)="showPlayoffManager = !showPlayoffManager">
-              Manage Playoffs
-            </button>
-          </div>
-        </div>
-
-        <!-- Playoff Manager -->
-        <div *ngIf="showPlayoffManager && canManagePlayoffs" class="card mb-4">
-          <div class="card-header">
-            <h5>Playoff Status Manager</h5>
-          </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="col-md-6" *ngFor="let team of filteredTeams">
-                <div class="mb-2">
-                  <label class="form-label">{{ team.name }}</label>
-                  <select 
-                    class="form-select form-select-sm" 
-                    [value]="getTeamPlayoffStatus(team.id)"
-                      (change)="updateTeamPlayoffStatus(team.id, ($event.target as HTMLSelectElement).value)">
-                    <option value="none">No Status</option>
-                    <option value="league">League Champion (P)</option>
-                    <option value="conference">Conference Champion (z)</option>
-                    <option value="division">Division Champion (y)</option>
-                    <option value="playoff">Playoff Bound (x)</option>
-                    <option value="eliminated">Eliminated (e)</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Loading Indicator -->
-        <div *ngIf="loadingStandings" class="text-center py-4">
-          <div class="spinner-border" role="status">
-            <span class="visually-hidden">Loading standings...</span>
-          </div>
-        </div>
-
-        <!-- Division View -->
-        <div *ngIf="standingsViewType === 'division' && !loadingStandings">
-          <div *ngFor="let conference of conferences" class="mb-4">
-            <h3>{{ conference.name }}</h3>
-            <div class="row">
-              <div *ngFor="let division of conference.divisions" class="col-lg-4 mb-3">
-                <div class="card">
-                  <div class="card-header">
-                    <h5 class="mb-0">{{ division }}</h5>
-                  </div>
-                  <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                      <thead>
-                        <tr>
-                          <th>Team</th>
-                          <th>GP</th>
-                          <th>W</th>
-                          <th>L</th>
-                          <th>OTL</th>
-                          <th>PTS</th>
-                          <th>GF</th>
-                          <th>GA</th>
-                          <th>DIFF</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr *ngFor="let team of getStandingsForDivision(conference.name, division)" 
-                            [class]="getPlayoffStatusClass(team)">
-                          <td>
-                            <div class="d-flex align-items-center">
-                              <img *ngIf="team.logoUrl" [src]="team.logoUrl" class="team-logo me-2" alt="{{ team.name }}">
-                              <span>{{ team.name }}</span>
-                              <span *ngIf="getPlayoffStatusBadge(team)" [class]="getPlayoffStatusBadge(team)!.class" class="ms-1">
-                                {{ getPlayoffStatusBadge(team)!.text }}
-                              </span>
-                            </div>
-                          </td>
-                          <td>{{ team.gamesPlayed }}</td>
-                          <td>{{ team.wins }}</td>
-                          <td>{{ team.losses }}</td>
-                          <td>{{ team.overtimeLosses }}</td>
-                          <td><strong>{{ team.points }}</strong></td>
-                          <td>{{ team.goalsFor }}</td>
-                          <td>{{ team.goalsAgainst }}</td>
-                          <td [class.text-success]="team.goalDifferential > 0" [class.text-danger]="team.goalDifferential < 0">
-                            {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Conference View -->
-        <div *ngIf="standingsViewType === 'conference' && !loadingStandings">
-          <div *ngFor="let conference of conferences" class="mb-4">
-            <div class="card">
-              <div class="card-header">
-                <h4 class="mb-0">{{ conference.name }}</h4>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-striped mb-0">
-                  <thead>
-                    <tr>
-                      <th>Rank</th>
-                      <th>Team</th>
-                      <th>GP</th>
-                      <th>W</th>
-                      <th>L</th>
-                      <th>OTL</th>
-                      <th>PTS</th>
-                      <th>P%</th>
-                      <th>GF</th>
-                      <th>GA</th>
-                      <th>DIFF</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let team of getStandingsForConference(conference.name); let i = index" 
-                        [class]="getPlayoffStatusClass(team)">
-                      <td>{{ i + 1 }}</td>
-                      <td>
-                        <div class="d-flex align-items-center">
-                          <img *ngIf="team.logoUrl" [src]="team.logoUrl" class="team-logo me-2" alt="{{ team.name }}">
-                          <span>{{ team.name }}</span>
-                          <span *ngIf="getPlayoffStatusBadge(team)" [class]="getPlayoffStatusBadge(team)!.class" class="ms-1">
-                            {{ getPlayoffStatusBadge(team)!.text }}
-                          </span>
-                        </div>
-                      </td>
-                      <td>{{ team.gamesPlayed }}</td>
-                      <td>{{ team.wins }}</td>
-                      <td>{{ team.losses }}</td>
-                      <td>{{ team.overtimeLosses }}</td>
-                      <td><strong>{{ team.points }}</strong></td>
-                      <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
-                      <td>{{ team.goalsFor }}</td>
-                      <td>{{ team.goalsAgainst }}</td>
-                      <td [class.text-success]="team.goalDifferential > 0" [class.text-danger]="team.goalDifferential < 0">
-                        {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Overall View -->
-        <div *ngIf="standingsViewType === 'overall' && !loadingStandings">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="mb-0">{{ selectedLeague === 'major' ? 'Major' : 'Minor' }} League Standings</h4>
-            </div>
-            <div class="table-responsive">
-              <table class="table table-striped mb-0">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Team</th>
-                    <th>GP</th>
-                    <th>W</th>
-                    <th>L</th>
-                    <th>OTL</th>
-                    <th>PTS</th>
-                    <th>P%</th>
-                    <th>GF</th>
-                    <th>GA</th>
-                    <th>DIFF</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let team of getOverallStandings(); let i = index" 
-                      [class]="getPlayoffStatusClass(team)">
-                    <td>{{ i + 1 }}</td>
-                    <td>
-                      <div class="d-flex align-items-center">
-                        <img *ngIf="team.logoUrl" [src]="team.logoUrl" class="team-logo me-2" alt="{{ team.name }}">
-                        <span>{{ team.name }}</span>
-                        <span *ngIf="getPlayoffStatusBadge(team)" [class]="getPlayoffStatusBadge(team)!.class" class="ms-1">
-                          {{ getPlayoffStatusBadge(team)!.text }}
-                        </span>
-                      </div>
-                    </td>
-                    <td>{{ team.gamesPlayed }}</td>
-                    <td>{{ team.wins }}</td>
-                    <td>{{ team.losses }}</td>
-                    <td>{{ team.overtimeLosses }}</td>
-                    <td><strong>{{ team.points }}</strong></td>
-                    <td>{{ (team.pointPercentage * 100).toFixed(1) }}%</td>
-                    <td>{{ team.goalsFor }}</td>
-                    <td>{{ team.goalsAgainst }}</td>
-                    <td [class.text-success]="team.goalDifferential > 0" [class.text-danger]="team.goalDifferential < 0">
-                      {{ team.goalDifferential > 0 ? '+' : '' }}{{ team.goalDifferential }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Analytics View -->
-      <div *ngIf="currentView === 'analytics'" class="analytics-section">
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <label for="teamSelect" class="form-label">Select Team</label>
-            <select id="teamSelect" class="form-select" [(ngModel)]="selectedTeamId" (change)="onTeamSelect()">
-              <option value="">Choose a team...</option>
-              <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div *ngIf="selectedTeamId" class="row">
-          <div class="col-md-3">
-            <div class="card text-center">
-              <div class="card-body">
-                <h5 class="card-title">Total Games</h5>
-                <h2 class="text-primary">{{ totalGames }}</h2>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card text-center">
-              <div class="card-body">
-                <h5 class="card-title">Total Points</h5>
-                <h2 class="text-success">{{ totalPoints }}</h2>
-                <small class="text-muted">Avg: {{ avgPoints }}</small>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card text-center">
-              <div class="card-body">
-                <h5 class="card-title">Total Assists</h5>
-                <h2 class="text-info">{{ totalAssists }}</h2>
-                <small class="text-muted">Avg: {{ avgAssists }}</small>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="card text-center">
-              <div class="card-body">
-                <h5 class="card-title">Total Rebounds</h5>
-                <h2 class="text-warning">{{ totalRebounds }}</h2>
-                <small class="text-muted">Avg: {{ avgRebounds }}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Reports View -->
-      <div *ngIf="currentView === 'reports'" class="reports-section">
-        <div class="card">
-          <div class="card-header">
-            <h5>Export Game Data</h5>
-          </div>
-          <div class="card-body">
-            <div class="row mb-3">
-              <div class="col-md-6">
-                <label for="exportTeamSelect" class="form-label">Select Team</label>
-                <select id="exportTeamSelect" class="form-select" [(ngModel)]="selectedExportTeamId" (change)="onExportTeamSelect()">
-                  <option value="">Choose a team...</option>
-                  <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label for="exportGameSelect" class="form-label">Select Game</label>
-                <select id="exportGameSelect" class="form-select" [(ngModel)]="selectedExportGameId" [disabled]="!selectedExportTeamId">
-                  <option value="">Choose a game...</option>
-                  <option *ngFor="let game of exportGames" [value]="game.id">
-                    {{ game.date?.toDate?.() ? (game.date.toDate() | date:'short') : game.date }} vs {{ game.opponent }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            <button 
-              class="btn btn-primary" 
-              (click)="exportSelectedGameToCSV()" 
-              [disabled]="!selectedExportTeamId || !selectedExportGameId">
-              Export to CSV
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .analytics-container {
-      padding: 20px;
-    }
-    
-    .team-logo {
-      width: 24px;
-      height: 24px;
-      object-fit: contain;
-    }
-    
-    .table th {
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-    
-    .table td {
-      font-size: 0.875rem;
-    }
-    
-    .card-header h4,
-    .card-header h5 {
-      margin-bottom: 0;
-    }
-    
-    .badge {
-      font-size: 0.75rem;
-    }
-    
-    .btn-group .btn {
-      border-radius: 0;
-    }
-    
-    .btn-group .btn:first-child {
-      border-top-left-radius: 0.375rem;
-      border-bottom-left-radius: 0.375rem;
-    }
-    
-    .btn-group .btn:last-child {
-      border-top-right-radius: 0.375rem;
-      border-bottom-right-radius: 0.375rem;
-    }
-  `]
+  templateUrl: './analytics.html',
+  styleUrls: ['./analytics.css']
 })
 export class Analytics implements OnInit {
   currentView: 'standings' | 'analytics' | 'reports' = 'standings';
@@ -475,17 +75,18 @@ export class Analytics implements OnInit {
   
   conferences: Conference[] = [
     {
-      name: 'Eastern Conference',
-      divisions: ['Atlantic', 'Metropolitan']
+      name: 'Mr. Hockey Conference',
+      divisions: ['Europe Division', 'Great Lakes Division', 'Atlantic Division']
     },
     {
-      name: 'Western Conference', 
-      divisions: ['Central', 'Pacific']
+      name: 'The Rocket Conference',
+      divisions: ['Northwest Division', 'Pacific Division', 'South Division']
     }
   ];
 
   // Analytics properties
   selectedTeamId = '';
+  selectedTeamName = '';
   totalGames = 0;
   totalPoints = 0;
   totalAssists = 0;
@@ -503,39 +104,108 @@ export class Analytics implements OnInit {
   private authService = inject(Auths);
 
   async ngOnInit() {
-    await this.loadTeams();
-    await this.checkAdminStatus();
-  }
+    // Check permissions
+    this.authService.effectiveRoles.subscribe(roles => {
+      this.canManagePlayoffs = roles.some(role => 
+        ['developer', 'commissioner'].includes(role)
+      );
+    });
 
-  async checkAdminStatus() {
-    const user = this.authService.getCurrentUser;
-    if (user) {
-      // Subscribe to current user and check admin status
-      this.authService.currentUser.subscribe(async (currentUser) => {
-        if (currentUser) {
-          const userDoc = await getDoc(doc(this.firestore, 'users', currentUser.uid));
-          this.canManagePlayoffs = userDoc.data()?.['role'] === 'admin';
-        }
-      });
-    }
+    await this.loadTeams();
   }
 
   async loadTeams() {
     this.loadingStandings = true;
     try {
-      const teamsQuery = query(
-        collection(this.firestore, 'teams'),
-        where('league', '==', this.selectedLeague),
-        orderBy('points', 'desc')
-      );
+      const teamsRef = collection(this.firestore, 'teams');
+      const snapshot = await getDocs(teamsRef);
       
-      const snapshot = await getDocs(teamsQuery);
-      this.teams = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Team));
+      this.teams = await Promise.all(snapshot.docs.map(async (teamDoc) => {
+        const data = teamDoc.data();
+        
+        // Calculate team stats from games
+        const gamesRef = collection(this.firestore, 'games');
+        const homeGamesQuery = query(gamesRef, where('homeTeamId', '==', teamDoc.id));
+        const awayGamesQuery = query(gamesRef, where('awayTeamId', '==', teamDoc.id));
+        
+        const [homeGamesSnap, awayGamesSnap] = await Promise.all([
+          getDocs(homeGamesQuery),
+          getDocs(awayGamesQuery)
+        ]);
+        
+        let wins = 0;
+        let losses = 0;
+        let overtimeLosses = 0;
+        let goalsFor = 0;
+        let goalsAgainst = 0;
+        let gamesPlayed = 0;
+        
+        // Process home games
+        homeGamesSnap.docs.forEach(gameDoc => {
+          const gameData = gameDoc.data();
+          if (gameData['homeScore'] !== undefined && gameData['awayScore'] !== undefined) {
+            gamesPlayed++;
+            const homeScore = gameData['homeScore'] || 0;
+            const awayScore = gameData['awayScore'] || 0;
+            
+            goalsFor += homeScore;
+            goalsAgainst += awayScore;
+            
+            if (homeScore > awayScore) {
+              wins++;
+            } else if (gameData['period'] === 'OT' || gameData['period'] === 'SO') {
+              overtimeLosses++;
+            } else {
+              losses++;
+            }
+          }
+        });
+        
+        // Process away games
+        awayGamesSnap.docs.forEach(gameDoc => {
+          const gameData = gameDoc.data();
+          if (gameData['homeScore'] !== undefined && gameData['awayScore'] !== undefined) {
+            gamesPlayed++;
+            const homeScore = gameData['homeScore'] || 0;
+            const awayScore = gameData['awayScore'] || 0;
+            
+            goalsFor += awayScore;
+            goalsAgainst += homeScore;
+            
+            if (awayScore > homeScore) {
+              wins++;
+            } else if (gameData['period'] === 'OT' || gameData['period'] === 'SO') {
+              overtimeLosses++;
+            } else {
+              losses++;
+            }
+          }
+        });
+        
+        const points = (wins * 2) + overtimeLosses;
+        const pointPercentage = gamesPlayed > 0 ? points / (gamesPlayed * 2) : 0;
+        
+        return {
+          id: teamDoc.id,
+          name: `${data['city']} ${data['mascot']}`,
+          league: data['league'] || 'major',
+          conference: data['conference'] || '',
+          division: data['division'] || '',
+          logoUrl: data['logoUrl'],
+          wins,
+          losses,
+          overtimeLosses,
+          points,
+          gamesPlayed,
+          goalsFor,
+          goalsAgainst,
+          goalDifferential: goalsFor - goalsAgainst,
+          pointPercentage,
+          playoffStatus: data['playoffStatus']
+        };
+      }));
       
-      this.filteredTeams = [...this.teams];
+      this.filteredTeams = this.teams.filter(team => team.league === this.selectedLeague);
     } catch (error) {
       console.error('Error loading teams:', error);
     } finally {
@@ -544,7 +214,7 @@ export class Analytics implements OnInit {
   }
 
   async onLeagueChange() {
-    await this.loadTeams();
+    this.filteredTeams = this.teams.filter(team => team.league === this.selectedLeague);
   }
 
   onStandingsViewChange() {
@@ -555,8 +225,13 @@ export class Analytics implements OnInit {
     await this.loadTeams();
   }
 
+  clearCache() {
+    // Clear any cached data if needed
+    console.log('Cache cleared');
+  }
+
   getStandingsForDivision(conference: string, division: string): Team[] {
-    return this.teams
+    return this.filteredTeams
       .filter(team => team.conference === conference && team.division === division)
       .sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
@@ -566,7 +241,7 @@ export class Analytics implements OnInit {
   }
 
   getStandingsForConference(conference: string): Team[] {
-    return this.teams
+    return this.filteredTeams
       .filter(team => team.conference === conference)
       .sort((a, b) => {
         if (b.points !== a.points) return b.points - a.points;
@@ -576,7 +251,7 @@ export class Analytics implements OnInit {
   }
 
   getOverallStandings(): Team[] {
-    return [...this.teams].sort((a, b) => {
+    return [...this.filteredTeams].sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.pointPercentage !== a.pointPercentage) return b.pointPercentage - a.pointPercentage;
       return b.goalDifferential - a.goalDifferential;
@@ -588,10 +263,7 @@ export class Analytics implements OnInit {
     return team?.playoffStatus || 'none';
   }
 
-  async updateTeamPlayoffStatus(teamId: string, event: Event) {
-    const target = event.target as HTMLSelectElement;
-    if (!target) return;
-    const status = target.value;
+  async updateTeamPlayoffStatus(teamId: string, status: string) {
     try {
       const statusValue = status === 'none' ? null : status;
       await updateDoc(doc(this.firestore, 'teams', teamId), {
@@ -640,6 +312,9 @@ export class Analytics implements OnInit {
       return;
     }
 
+    const team = this.teams.find(t => t.id === this.selectedTeamId);
+    this.selectedTeamName = team?.name || '';
+
     try {
       const gamesQuery = query(
         collection(this.firestore, 'games'),
@@ -687,6 +362,7 @@ export class Analytics implements OnInit {
     this.avgPoints = '0.0';
     this.avgAssists = '0.0';
     this.avgRebounds = '0.0';
+    this.selectedTeamName = '';
   }
 
   async onExportTeamSelect() {
