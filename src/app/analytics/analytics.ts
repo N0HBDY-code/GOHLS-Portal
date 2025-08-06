@@ -508,7 +508,7 @@ export class Analytics implements OnInit {
   }
 
   async checkAdminStatus() {
-    const user = this.authService.currentUser;
+    const user = this.authService.getCurrentUser;
     if (user) {
       // Subscribe to current user and check admin status
       this.authService.currentUser.subscribe(async (currentUser) => {

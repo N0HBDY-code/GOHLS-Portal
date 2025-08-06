@@ -14,8 +14,13 @@ import { FormsModule } from '@angular/forms';
 export class AssignRoles implements OnInit {
   private firestore: Firestore = inject(Firestore);
 
+  email: string = '';
+  selectedRoles: string[] = [];
+  successMessage: string = '';
+  errorMessage: string = '';
+  availableRoles = ['viewer', 'developer', 'commissioner', 'gm', 'stats monkey', 'finance officer', 'progression tracker'];
+
   users: any[] = [];
-  allRoles = ['viewer', 'developer', 'commissioner', 'gm', 'stats monkey', 'finance officer', 'progression tracker'];
 
   ngOnInit(): void {
     this.loadUsers();
@@ -26,19 +31,47 @@ export class AssignRoles implements OnInit {
     this.users = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
-  async toggleRole(user: any, role: string) {
-    const userRef = doc(this.firestore, 'users', user.id);
-    const roles: string[] = user.roles || [];
-
-    const updatedRoles = roles.includes(role)
-      ? roles.filter(r => r !== role)
-      : [...roles, role];
-
-    await updateDoc(userRef, { roles: updatedRoles });
-    user.roles = updatedRoles;
+  toggleRole(role: string) {
+    const index = this.selectedRoles.indexOf(role);
+    if (index > -1) {
+      this.selectedRoles.splice(index, 1);
+    } else {
+      this.selectedRoles.push(role);
+    }
   }
 
-  hasRole(user: any, role: string): boolean {
-    return user.roles?.includes(role);
+  async assignRoles() {
+    if (!this.email || this.selectedRoles.length === 0) {
+      this.errorMessage = 'Please enter an email and select at least one role';
+      this.successMessage = '';
+      return;
+    }
+
+    try {
+      // Find user by email
+      const usersSnapshot = await getDocs(collection(this.firestore, 'users'));
+      const userDoc = usersSnapshot.docs.find(doc => doc.data()['email'] === this.email);
+      
+      if (!userDoc) {
+        this.errorMessage = 'User not found with that email address';
+        this.successMessage = '';
+        return;
+      }
+
+      // Update user roles
+      const userRef = doc(this.firestore, 'users', userDoc.id);
+      await updateDoc(userRef, {
+        roles: this.selectedRoles
+      });
+
+      this.successMessage = `Roles assigned successfully to ${this.email}`;
+      this.errorMessage = '';
+      this.email = '';
+      this.selectedRoles = [];
+    } catch (error) {
+      console.error('Error assigning roles:', error);
+      this.errorMessage = 'Failed to assign roles. Please try again.';
+      this.successMessage = '';
+    }
   }
 }
