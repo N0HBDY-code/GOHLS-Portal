@@ -589,7 +589,9 @@ export class Analytics implements OnInit {
   }
 
   async updateTeamPlayoffStatus(teamId: string, event: Event) {
-    const status = (event.target as HTMLSelectElement).value;
+    const target = event.target as HTMLSelectElement;
+    if (!target) return;
+    const status = target.value;
     try {
       const statusValue = status === 'none' ? null : status;
       await updateDoc(doc(this.firestore, 'teams', teamId), {
