@@ -8,8 +8,8 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-assign-roles',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './assign-roles.component.html',
-  styleUrls: ['./assign-roles.component.css']
+  templateUrl: './assign-roles.html',
+  styleUrls: ['./assign-roles.css']
 })
 export class AssignRoles implements OnInit {
   private firestore: Firestore = inject(Firestore);

@@ -53,8 +53,8 @@ interface PendingPlayer {
   selector: 'app-headquarters',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './headquarters.component.html',
-  styleUrls: ['./headquarters.component.css']
+  templateUrl: './headquarters.html',
+  styleUrls: ['./headquarters.css']
 })
 export class Headquarters implements OnInit {
   private firestore = inject(Firestore);

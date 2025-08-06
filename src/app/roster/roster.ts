@@ -32,8 +32,8 @@ interface Player {
   selector: 'app-roster',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './roster.component.html',
-  styleUrls: ['./roster.component.css']
+  templateUrl: './roster.html',
+  styleUrls: ['./roster.css']
 })
 export class Roster implements OnInit {
   @Input() teamId!: string;

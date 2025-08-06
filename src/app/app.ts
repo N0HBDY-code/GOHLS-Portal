@@ -8,8 +8,8 @@ import { Navbar } from './navbar/navbar';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, CommonModule, Navbar],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  templateUrl: './app.html',
+  styleUrls: ['./app.css']
 })
 export class AppComponent {
   showNavbar = true;

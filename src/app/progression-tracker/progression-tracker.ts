@@ -21,8 +21,8 @@ import { Auths } from '../auth-service/auth-service';
   selector: 'app-progression-tracker',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './progression-tracker.component.html',
-  styleUrls: ['./progression-tracker.component.css']
+  templateUrl: './progression-tracker.html',
+  styleUrls: ['./progression-tracker.css']
 })
 export class ProgressionTracker implements OnInit {
   private firestore = inject(Firestore);

@@ -45,8 +45,8 @@ interface GameLineup {
   selector: 'app-dashboard',
   standalone: true,
   imports: [RouterModule, CommonModule],
-  templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  templateUrl: './dashboard.html',
+  styleUrls: ['./dashboard.css']
 })
 export class Dashboard implements OnInit, OnDestroy {
   user: User | null = null;

@@ -40,6 +40,10 @@ export class Auths {
     map(([roles, viewAs]) => viewAs ? [viewAs] : roles)
   );
 
+  getCurrentUser() {
+    return this.auth.currentUser;
+  }
+
   constructor(private auth: Auth, private firestore: Firestore) {
     onAuthStateChanged(this.auth, async (user) => {
       this.userSubject.next(user);

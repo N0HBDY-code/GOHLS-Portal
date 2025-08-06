@@ -80,8 +80,8 @@ interface Team {
   selector: 'app-draft',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './draft.component.html',
-  styleUrls: ['./draft.component.css']
+  templateUrl: './draft.html',
+  styleUrls: ['./draft.css']
 })
 export class Draft implements OnInit {
   // Current view

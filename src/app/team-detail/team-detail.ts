@@ -40,8 +40,8 @@ interface Team {
   selector: 'app-team-detail',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './team-detail.component.html',
-  styleUrls: ['./team-detail.component.css']
+  templateUrl: './team-detail.html',
+  styleUrls: ['./team-detail.css']
 })
 export class TeamDetail implements OnInit {
   teamId: string;

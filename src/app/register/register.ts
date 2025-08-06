@@ -6,8 +6,8 @@ import { Auths, UserInfo } from '../auth-service/auth-service';
   selector: 'app-register',
   standalone: true,
   imports: [FormsModule],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.css'
+  templateUrl: './register.html',
+  styleUrl: './register.css'
 })
 export class Register {
   user: UserInfo = {

@@ -141,7 +141,7 @@ interface Conference {
                   <select 
                     class="form-select form-select-sm" 
                     [value]="getTeamPlayoffStatus(team.id)"
-                    (change)="updateTeamPlayoffStatus(team.id, $event.target.value)">
+                      (change)="updateTeamPlayoffStatus(team.id, ($event.target as HTMLSelectElement).value)">
                     <option value="none">No Status</option>
                     <option value="league">League Champion (P)</option>
                     <option value="conference">Conference Champion (z)</option>
@@ -508,10 +508,15 @@ export class Analytics implements OnInit {
   }
 
   async checkAdminStatus() {
-    const user = this.authService.getCurrentUser();
+    const user = this.authService.currentUser;
     if (user) {
-      const userDoc = await getDoc(doc(this.firestore, 'users', user.uid));
-      this.canManagePlayoffs = userDoc.data()?.['role'] === 'admin';
+      // Subscribe to current user and check admin status
+      this.authService.currentUser.subscribe(async (currentUser) => {
+        if (currentUser) {
+          const userDoc = await getDoc(doc(this.firestore, 'users', currentUser.uid));
+          this.canManagePlayoffs = userDoc.data()?.['role'] === 'admin';
+        }
+      });
     }
   }
 

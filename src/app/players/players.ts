@@ -9,8 +9,8 @@ import { PlayerManager } from '../player-manager/player-manager';
   selector: 'app-player',
   standalone: true,
   imports: [CommonModule, FormsModule, PlayerManager],
-  templateUrl: './players.component.html',
-  styleUrls: ['./players.component.css']
+  templateUrl: './players.html',
+  styleUrls: ['./players.css']
 })
 export class Players implements OnInit, OnDestroy {
   private firestore: Firestore = inject(Firestore);

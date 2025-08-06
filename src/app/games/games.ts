@@ -48,8 +48,8 @@ interface Game {
   selector: 'app-games',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './games.component.html',
-  styleUrls: ['./games.component.css']
+  templateUrl: './games.html',
+  styleUrls: ['./games.css']
 })
 export class Games implements OnInit {
   teams: Team[] = [];

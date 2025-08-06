@@ -28,8 +28,8 @@ interface Conference {
   selector: 'app-teams',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './teams.component.html',
-  styleUrls: ['./teams.component.css']
+  templateUrl: './teams.html',
+  styleUrls: ['./teams.css']
 })
 export class Teams {
   city = '';

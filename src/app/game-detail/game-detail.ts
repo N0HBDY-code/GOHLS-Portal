@@ -50,8 +50,8 @@ interface RosterData {
   selector: 'app-game-detail',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './game-detail.component.html',
-  styleUrls: ['./game-detail.component.css']
+  templateUrl: './game-detail.html',
+  styleUrls: ['./game-detail.css']
 })
 export class GameDetail implements OnInit {
   gameId: string;

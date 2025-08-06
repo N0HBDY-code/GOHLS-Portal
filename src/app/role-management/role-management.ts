@@ -7,8 +7,8 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-role-management',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './role-management.component.html',
-  styleUrls: ['./role-management.component.css']
+  templateUrl: './role-management.html',
+  styleUrls: ['./role-management.css']
 })
 export class RoleManagement implements OnInit {
   private firestore = inject(Firestore);

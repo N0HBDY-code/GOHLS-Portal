@@ -9,8 +9,8 @@ import { Router } from '@angular/router';
   selector: 'app-player-manager',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './player-manager.component.html',
-  styleUrls: ['./player-manager.component.css']
+  templateUrl: './player-manager.html',
+  styleUrls: ['./player-manager.css']
 })
 export class PlayerManager implements OnInit, OnDestroy {
   private firestore: Firestore = inject(Firestore);

@@ -25,8 +25,8 @@ interface Player {
   selector: 'app-reports',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './reports.component.html',
-  styleUrls: ['./reports.component.css']
+  templateUrl: './reports.html',
+  styleUrls: ['./reports.css']
 })
 export class Reports implements OnInit {
   private firestore: Firestore = inject(Firestore);

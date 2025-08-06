@@ -5,8 +5,8 @@ import { Auths } from '../auth-service/auth-service';
 @Component({
   selector: 'app-forgot-password',
   imports: [FormsModule],
-  templateUrl: './forgot-password.component.html',
-  styleUrl: './forgot-password.component.css'
+  templateUrl: './forgot-password.html',
+  styleUrl: './forgot-password.css'
 })
 export class ForgotPassword {
 
