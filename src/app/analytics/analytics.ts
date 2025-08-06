@@ -397,7 +397,7 @@ export class Analytics implements OnInit {
     const csvContent = this.generateCSV(game);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const fileName = `game-${game.id}-${game.date?.toDate?.() ? game.date.toDate().toISOString().split('T')[0] : 'unknown'}.csv`;
-    saveAs(blob, fileName);
+    this.downloadCSV(csvContent, fileName);
   }
 
   private generateCSV(game: Game): string {
