@@ -30,7 +30,6 @@
           },
           "configurations": {
             "production": {
-              "baseHref": "/GOHLS-Portal/",
               "budgets": [
                 {
                   "type": "initial",
