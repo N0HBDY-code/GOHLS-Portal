@@ -9,7 +9,7 @@ import {
   sendPasswordResetEmail,
   User
 } from '@angular/fire/auth';
-import { Firestore, doc, setDoc, getDoc } from '@angular/fire/firestore';
+import { Firestore, doc, setDoc, getDoc, collection, getDocs } from '@angular/fire/firestore';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { map } from 'rxjs/operators';
@@ -76,14 +76,20 @@ export class Auths {
       roles: ['viewer'] // default role
     });
 
+    // Also create a username mapping for easier lookup
+    await setDoc(doc(this.firestore, 'usernames', userInfo.username), {
+      email: userInfo.email,
+      uid: userCred.user.uid
+    });
+
     this.userSubject.next(userCred.user);
     this.rolesSubject.next(['viewer']);
     return userCred.user;
   }
 
   login(username: string, password: string) {
-    // First get the email associated with the username
-    return this.getUserEmailByUsername(username).then(email => {
+    // First try to find user by displayName (username)
+    return this.getUserEmailByDisplayName(username).then(email => {
       if (!email) {
         throw new Error('Username not found');
       }
@@ -100,10 +106,23 @@ export class Auths {
     });
   }
 
-  private async getUserEmailByUsername(username: string): Promise<string | null> {
-    const usersRef = doc(this.firestore, 'usernames', username);
-    const snapshot = await getDoc(usersRef);
-    return snapshot.exists() ? snapshot.data()['email'] : null;
+  private async getUserEmailByDisplayName(displayName: string): Promise<string | null> {
+    try {
+      const usersRef = collection(this.firestore, 'users');
+      const snapshot = await getDocs(usersRef);
+      
+      for (const doc of snapshot.docs) {
+        const userData = doc.data();
+        if (userData['displayName'] === displayName) {
+          return userData['email'];
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error finding user by display name:', error);
+      return null;
+    }
   }
 
   forgotPassword(email: string) {
@@ -119,6 +138,10 @@ export class Auths {
 
   signInWithGoogle() {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    
     return signInWithPopup(this.auth, provider).then(async (result) => {
       const user = result.user;
       this.userSubject.next(user);
@@ -133,6 +156,15 @@ export class Auths {
           email: user.email,
           roles: ['viewer']
         });
+        
+        // Also create username mapping if displayName exists
+        if (user.displayName) {
+          await setDoc(doc(this.firestore, 'usernames', user.displayName), {
+            email: user.email,
+            uid: user.uid
+          });
+        }
+        
         this.rolesSubject.next(['viewer']);
       } else {
         const data = snapshot.data();
