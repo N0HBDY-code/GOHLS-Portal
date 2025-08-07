@@ -5,6 +5,9 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration production",
+    "build:github": "ng build --configuration production --base-href=/GOHLS/",
+    "deploy:github": "npm run build:github && npx angular-cli-ghpages --dir=dist/gohls-portal",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

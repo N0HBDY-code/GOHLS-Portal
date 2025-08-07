@@ -92,5 +92,10 @@ export const routes: Routes = [
         loadComponent: () => import('./draft/draft').then(m => m.Draft),
         title: 'Draft Central',
         canActivate: [RoleGuard(['developer', 'commissioner', 'gm'])]
+    },
+    // CRITICAL: Add wildcard route for GitHub Pages SPA routing
+    {
+        path: '**',
+        redirectTo: '/login'
     }
 ];
