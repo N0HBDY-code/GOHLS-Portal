@@ -94,6 +94,7 @@ export class Draft implements OnInit {
   selectedDraftClass: DraftClass | null = null;
   
   // Current draft
+  selectedDraftClassId: string = '';
   selectedDraftClassForDraft: DraftClass | null = null;
   draftPicks: DraftPick[] = [];
   currentRound = 1;
@@ -315,7 +316,7 @@ export class Draft implements OnInit {
       // Set selected draft class to the most recent one
       if (this.draftClasses.length > 0) {
         this.selectedDraftClass = this.draftClasses[0];
-        this.selectedDraftClassForDraft = this.draftClasses[0];
+        // Don't auto-select for draft - let user choose
       }
     } catch (error) {
       console.error('Error loading draft classes:', error);
@@ -973,6 +974,19 @@ export class Draft implements OnInit {
   selectDraftClassForDraft(draftClass: DraftClass) {
     this.selectedDraftClassForDraft = draftClass;
     this.loadCurrentDraft();
+  }
+
+  onDraftClassSelectionChange() {
+    if (this.selectedDraftClassId) {
+      const draftClass = this.draftClasses.find(dc => dc.id === this.selectedDraftClassId);
+      if (draftClass) {
+        this.selectedDraftClassForDraft = draftClass;
+        this.loadCurrentDraft();
+      }
+    } else {
+      this.selectedDraftClassForDraft = null;
+      this.draftPicks = [];
+    }
   }
   
   // Draft navigation
