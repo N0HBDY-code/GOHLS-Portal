@@ -183,3 +183,32 @@
     font-size: 0.7rem;
   }
 }
+
+/* Player selection styling */
+.player-selection-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #dee2e6 !important;
+}
+
+.player-selection-item:hover {
+  background-color: #f8f9fa;
+  border-color: #0d6efd !important;
+}
+
+.player-selection-item.selected {
+  background-color: #e7f3ff;
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
+}
+
+.draft-round-nav {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  text-align: center;
+}
+
+.draft-round-picks {
+  padding: 1rem;
+}

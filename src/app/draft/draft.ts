@@ -714,14 +714,17 @@ export class Draft implements OnInit {
   }
   
   async makeDraftPick() {
-    if (!this.selectedDraftPick || !this.selectedPlayerId) return;
+    if (!this.selectedPlayerId) return;
+    
+    const currentPick = this.getCurrentDraftPick();
+    if (!currentPick || currentPick.completed || currentPick.passed) return;
     
     try {
       const player = this.availablePlayers.find(p => p.id === this.selectedPlayerId);
       if (!player) return;
       
       // Update draft pick
-      const pickRef = doc(this.firestore, `draftPicks/${this.selectedDraftPick.id}`);
+      const pickRef = doc(this.firestore, `draftPicks/${currentPick.id}`);
       await updateDoc(pickRef, {
         playerId: player.id,
         completed: true,
@@ -731,17 +734,17 @@ export class Draft implements OnInit {
       // Update player
       const playerRef = doc(this.firestore, `players/${player.id}`);
       await updateDoc(playerRef, {
-        teamId: this.selectedDraftPick.teamId,
-        draftedBy: this.selectedDraftPick.teamId,
-        draftRound: this.selectedDraftPick.round,
-        draftPick: this.selectedDraftPick.pick,
-        draftSeason: this.selectedDraftPick.season,
+        teamId: currentPick.teamId,
+        draftedBy: currentPick.teamId,
+        draftRound: currentPick.round,
+        draftPick: currentPick.pick,
+        draftSeason: currentPick.season,
         draftStatus: 'drafted',
         freeAgent: false
       });
       
       // Add player to team roster
-      const rosterRef = doc(this.firestore, `teams/${this.selectedDraftPick.teamId}/roster/${player.id}`);
+      const rosterRef = doc(this.firestore, `teams/${currentPick.teamId}/roster/${player.id}`);
       await setDoc(rosterRef, {
         firstName: player.firstName,
         lastName: player.lastName,
@@ -749,28 +752,27 @@ export class Draft implements OnInit {
         archetype: player.archetype,
         jerseyNumber: Math.floor(Math.random() * 98) + 1, // Random number 1-99
         age: player.age,
-        teamId: this.selectedDraftPick.teamId,
-        draftRound: this.selectedDraftPick.round,
-        draftPick: this.selectedDraftPick.pick,
-        draftSeason: this.selectedDraftPick.season
+        teamId: currentPick.teamId,
+        draftRound: currentPick.round,
+        draftPick: currentPick.pick,
+        draftSeason: currentPick.season
       });
       
       // Add to player history
       await addDoc(collection(this.firestore, `players/${player.id}/history`), {
         action: 'drafted',
-        teamId: this.selectedDraftPick.teamId,
+        teamId: currentPick.teamId,
         timestamp: new Date(),
-        details: `Drafted Round ${this.selectedDraftPick.round}, Pick ${this.selectedDraftPick.pick} by ${this.selectedDraftPick.teamName}`
+        details: `Drafted Round ${currentPick.round}, Pick ${currentPick.pick} by ${currentPick.teamName}`
       });
       
-      // Close modal and reload
-      this.showMakePickModal = false;
-      this.selectedDraftPick = null;
+      // Clear selection and reload
       this.selectedPlayerId = '';
       
       await this.loadCurrentDraft();
     } catch (error) {
       console.error('Error making draft pick:', error);
+      alert('Failed to make draft pick. Please try again.');
     }
   }
   
