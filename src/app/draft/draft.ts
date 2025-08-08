@@ -94,7 +94,7 @@ export class Draft implements OnInit {
   selectedDraftClass: DraftClass | null = null;
   
   // Current draft
-  selectedDraftClassId: string = '';
+  public selectedDraftClassId: string = '';
   selectedDraftClassForDraft: DraftClass | null = null;
   draftPicks: DraftPick[] = [];
   currentRound = 1;
@@ -976,7 +976,7 @@ export class Draft implements OnInit {
     this.loadCurrentDraft();
   }
 
-  onDraftClassSelectionChange() {
+  public onDraftClassSelectionChange() {
     if (this.selectedDraftClassId) {
       const draftClass = this.draftClasses.find(dc => dc.id === this.selectedDraftClassId);
       if (draftClass) {
