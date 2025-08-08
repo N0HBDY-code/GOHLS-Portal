@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { User } from 'firebase/auth';
+import { User as FirebaseUser } from 'firebase/auth';
 import { Subscription, Observable } from 'rxjs';
 import { Firestore, collection, getDocs, doc, getDoc, query, orderBy, limit, where } from '@angular/fire/firestore';
 import { Auths } from '../auth-service/auth-service';
@@ -17,7 +17,7 @@ interface Player {
   teamName?: string;
 }
 
-interface User {
+interface AppUser {
   id: string;
   displayName: string;
   email: string;
@@ -64,12 +64,12 @@ interface GameLineup {
   styleUrls: ['./dashboard.css']
 })
 export class Dashboard implements OnInit, OnDestroy {
-  user: User | null = null;
+  user: FirebaseUser | null = null;
   private userSub!: Subscription;
   today: Date = new Date();
   
   // New dashboard data
-  newestUsers: User[] = [];
+  newestUsers: AppUser[] = [];
   recentTransactions: Transaction[] = [];
   todaysGames: GameLineup[] = [];
   loadingUsers = false;
