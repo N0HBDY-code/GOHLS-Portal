@@ -7,7 +7,9 @@ import {
   updateProfile,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  User
+  User,
+  setPersistence,
+  browserLocalPersistence
 } from '@angular/fire/auth';
 import { Firestore, doc, setDoc, getDoc, collection, getDocs } from '@angular/fire/firestore';
 import { BehaviorSubject, combineLatest } from 'rxjs';
@@ -45,6 +47,11 @@ export class Auths {
   }
 
   constructor(private auth: Auth, private firestore: Firestore) {
+    // Set authentication persistence to local storage
+    setPersistence(this.auth, browserLocalPersistence).catch(error => {
+      console.error('Error setting auth persistence:', error);
+    });
+    
     onAuthStateChanged(this.auth, async (user) => {
       this.userSubject.next(user);
 

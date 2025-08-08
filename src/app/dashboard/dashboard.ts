@@ -316,15 +316,19 @@ export class Dashboard implements OnInit, OnDestroy {
       // 2. Load trade offers that have been approved
       try {
         const tradesRef = collection(this.firestore, 'tradeOffers');
-        const approvedTradesQuery = query(
-          tradesRef, 
-          where('status', '==', 'approved'),
-          orderBy('timestamp', 'desc'),
-          limit(10)
-        );
-        const tradesSnapshot = await getDocs(approvedTradesQuery);
+        const tradesSnapshot = await getDocs(tradesRef);
         
-        for (const tradeDoc of tradesSnapshot.docs) {
+        // Filter and sort in memory to avoid index requirements
+        const approvedTrades = tradesSnapshot.docs
+          .filter(doc => doc.data()['status'] === 'approved')
+          .sort((a, b) => {
+            const aTime = a.data()['timestamp']?.toDate?.() || new Date(a.data()['timestamp']);
+            const bTime = b.data()['timestamp']?.toDate?.() || new Date(b.data()['timestamp']);
+            return bTime.getTime() - aTime.getTime();
+          })
+          .slice(0, 10); // Limit to 10 most recent
+        
+        for (const tradeDoc of approvedTrades) {
           const tradeData = tradeDoc.data();
           
           // Get team names

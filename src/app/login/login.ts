@@ -22,24 +22,38 @@ export class Login {
 
   login() {
     if (this.username === '') {
-      alert('Please enter your username');
+      this.errorMessage = 'Please enter your username';
       return;
     }
 
     if (this.password === '') {
-      alert('Please enter your password');
+      this.errorMessage = 'Please enter your password';
       return;
     }
 
+    // Clear any previous error messages
+    this.errorMessage = '';
     this.authService.login(this.username, this.password)
       .then(() => {
         this.router.navigate(['/dashboard']);
         this.username = '';
         this.password = '';
+        this.errorMessage = '';
       })
       .catch(err => {
         console.error('Login failed:', err);
-        this.errorMessage = 'Login failed: ' + err.message;
+        // Provide user-friendly error messages
+        if (err.code === 'auth/user-not-found') {
+          this.errorMessage = 'Username not found. Please check your username or register for a new account.';
+        } else if (err.code === 'auth/wrong-password') {
+          this.errorMessage = 'Incorrect password. Please try again.';
+        } else if (err.code === 'auth/invalid-email') {
+          this.errorMessage = 'Invalid email format.';
+        } else if (err.message === 'Username not found') {
+          this.errorMessage = 'Username not found. Please check your username or register for a new account.';
+        } else {
+          this.errorMessage = 'Login failed: ' + err.message;
+        }
       });
   }
 }
