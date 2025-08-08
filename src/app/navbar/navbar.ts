@@ -14,6 +14,7 @@ import { RouterModule } from '@angular/router';
 })
 export class Navbar implements OnInit, OnDestroy {
   isDeveloper = false;
+  isLoggedIn = false;
   viewAsRoles: string[] = [];
   allRoles: string[] = [
     'viewer',
@@ -26,11 +27,16 @@ export class Navbar implements OnInit, OnDestroy {
 
   private rolesSub!: Subscription;
   private viewAsSub!: Subscription;
+  private userSub!: Subscription;
   allowedRolesForProgression = ['developer', 'commissioner', 'progression tracker'];
   canSeeProgression = false;
   constructor(private authService: Auths, private router: Router) {}
 
   ngOnInit(): void {
+    this.userSub = this.authService.currentUser.subscribe(user => {
+      this.isLoggedIn = !!user;
+    });
+
     this.rolesSub = this.authService.currentRoles.subscribe(roles => {
       this.isDeveloper = roles.includes('developer'); // only real role
     });
@@ -54,6 +60,7 @@ export class Navbar implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.userSub?.unsubscribe();
     this.rolesSub?.unsubscribe();
     this.viewAsSub?.unsubscribe();
   }

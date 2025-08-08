@@ -14,6 +14,7 @@ import { GameDetail } from './game-detail/game-detail';
 import { Headquarters } from './headquarters/headquarters';
 import { Draft } from './draft/draft';
 import { RoleGuard } from './role.guard';
+import { AuthGuard } from './auth.guard';
 
 export const routes: Routes = [
     {
@@ -29,7 +30,8 @@ export const routes: Routes = [
     {
         path: 'dashboard',
         component: Dashboard,
-        title: 'Dashboard'
+        title: 'Dashboard',
+        canActivate: [AuthGuard]
     },
     {
         path: 'register',
@@ -47,51 +49,57 @@ export const routes: Routes = [
     {
         path:'analytics',
         component: Analytics,
-        title: 'Stats and Standings'
+        title: 'Stats and Standings',
+        canActivate: [AuthGuard]
     },
     {
         path:'games',
         component: Games,
-        title: 'Games'
+        title: 'Games',
+        canActivate: [AuthGuard]
     },
     {
         path: 'games/:teamId/:gameId',
         component: GameDetail,
-        title: 'Game Details'
+        title: 'Game Details',
+        canActivate: [AuthGuard]
     },
     {
         path: 'teams',
         loadComponent: () => import('./teams/teams').then(m => m.Teams),
-        title: 'Teams'
+        title: 'Teams',
+        canActivate: [AuthGuard]
     },
     {
         path: 'teams/:id',
         loadComponent: () =>
           import('./team-detail/team-detail').then(m => m.TeamDetail),
-        title: 'Team Details'
+        title: 'Team Details',
+        canActivate: [AuthGuard]
     },
     {
         path:'player',
         component: Players,
-        title:'Player'
+        title:'Player',
+        canActivate: [AuthGuard]
     },
     {
         path: 'headquarters',
         loadComponent: () => import('./headquarters/headquarters').then(m => m.Headquarters),
         title: 'Headquarters',
-        canActivate: [RoleGuard(['developer', 'commissioner'])]  
+        canActivate: [AuthGuard, RoleGuard(['developer', 'commissioner'])]  
     },
     {
         path: 'progression-tracker',
         loadComponent: () => import('./progression-tracker/progression-tracker').then(m => m.ProgressionTracker),
         title: 'Progression Tracker',
-        canActivate: [RoleGuard(['developer', 'commissioner', 'progression tracker'])]
+        canActivate: [AuthGuard, RoleGuard(['developer', 'commissioner', 'progression tracker'])]
     },
     {
         path: 'draft',
         loadComponent: () => import('./draft/draft').then(m => m.Draft),
         title: 'Draft Central',
-        canActivate: [RoleGuard(['developer', 'commissioner', 'gm'])]
+        canActivate: [AuthGuard, RoleGuard(['developer', 'commissioner', 'gm'])]
     },
     // CRITICAL: Add wildcard route for GitHub Pages SPA routing
     {
