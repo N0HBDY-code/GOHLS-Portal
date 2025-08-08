@@ -172,27 +172,6 @@ export class Draft implements OnInit {
     }
   }
 
-  async loadCurrentLeagueSeason() {
-    try {
-      const seasonRef = doc(this.firestore, 'leagueSettings/season');
-      const seasonSnap = await getDoc(seasonRef);
-      
-      if (seasonSnap.exists()) {
-        this.currentLeagueSeason = seasonSnap.data()['currentSeason'] || 1;
-      } else {
-        // Initialize season settings if they don't exist
-        await setDoc(seasonRef, {
-          currentSeason: 1,
-          createdDate: new Date()
-        });
-        this.currentLeagueSeason = 1;
-      }
-    } catch (error) {
-      console.error('Error loading current league season:', error);
-      this.currentLeagueSeason = 1;
-    }
-  }
-
   async ngOnInit() {
     // Check permissions
     this.authService.effectiveRoles.subscribe(roles => {
