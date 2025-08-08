@@ -286,6 +286,29 @@
               </span>
             </p>
           </div>
+          <div *ngIf="canManageDraft" class="btn-group">
+            <button class="btn btn-sm"
+                    [class.btn-warning]="selectedDraftClassForDraft.status === 'upcoming'"
+                    [class.btn-outline-warning]="selectedDraftClassForDraft.status !== 'upcoming'"
+                    (click)="setDraftStatus('upcoming')"
+                    [disabled]="selectedDraftClassForDraft.status === 'upcoming'">
+              <i class="fas fa-clock me-1"></i>Upcoming
+            </button>
+            <button class="btn btn-sm"
+                    [class.btn-success]="selectedDraftClassForDraft.status === 'active'"
+                    [class.btn-outline-success]="selectedDraftClassForDraft.status !== 'active'"
+                    (click)="setDraftStatus('active')"
+                    [disabled]="selectedDraftClassForDraft.status === 'active'">
+              <i class="fas fa-play me-1"></i>Active
+            </button>
+            <button class="btn btn-sm"
+                    [class.btn-secondary]="selectedDraftClassForDraft.status === 'completed'"
+                    [class.btn-outline-secondary]="selectedDraftClassForDraft.status !== 'completed'"
+                    (click)="setDraftStatus('completed')"
+                    [disabled]="selectedDraftClassForDraft.status === 'completed'">
+              <i class="fas fa-check me-1"></i>Completed
+            </button>
+          </div>
         </div>
       </div>
 

@@ -608,6 +608,56 @@ export class Draft implements OnInit {
       console.error('Error ending draft:', error);
     }
   }
+
+  async setDraftStatus(status: 'upcoming' | 'active' | 'completed') {
+    if (!this.canManageDraft || !this.selectedDraftClassForDraft?.id) return;
+    
+    try {
+      const classRef = doc(this.firestore, `draftClasses/${this.selectedDraftClassForDraft.id}`);
+      const updateData: any = { status };
+      
+      // Add timestamps based on status
+      if (status === 'active') {
+        updateData.startDate = new Date();
+      } else if (status === 'completed') {
+        updateData.endDate = new Date();
+        
+        // Move undrafted players to free agency when completing
+        const undraftedQuery = query(
+          collection(this.firestore, 'players'),
+          where('draftClass', '==', this.selectedDraftClassForDraft.season),
+          where('draftStatus', '==', 'eligible')
+        );
+        
+        const undraftedSnap = await getDocs(undraftedQuery);
+        
+        if (!undraftedSnap.empty) {
+          const batch = writeBatch(this.firestore);
+          undraftedSnap.docs.forEach(docSnap => {
+            batch.update(docSnap.ref, {
+              draftStatus: 'undrafted',
+              freeAgent: true,
+              teamId: 'none'
+            });
+          });
+          await batch.commit();
+        }
+      }
+      
+      await updateDoc(classRef, updateData);
+      
+      // Update local state
+      this.selectedDraftClassForDraft.status = status;
+      this.draftInProgress = status === 'active';
+      
+      // Reload draft classes to reflect changes
+      await this.loadDraftClasses();
+      
+    } catch (error) {
+      console.error('Error updating draft status:', error);
+      alert('Failed to update draft status. Please try again.');
+    }
+  }
   
   async openMakePickModal(pick: DraftPick) {
     if (!this.canManageDraft || !this.draftInProgress || pick.completed) return;
