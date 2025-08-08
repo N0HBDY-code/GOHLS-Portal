@@ -38,6 +38,12 @@ interface Transaction {
   playersInvolved: string[];
   teamLogo?: string;
   teamName?: string;
+  tradeData?: {
+    fromTeam: { name: string; logo: string };
+    toTeam: { name: string; logo: string };
+    offeredPlayers: string[];
+    requestedPlayers: string[];
+  };
 }
 
 interface GameLineup {
