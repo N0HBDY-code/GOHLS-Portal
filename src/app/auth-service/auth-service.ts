@@ -138,9 +138,8 @@ export class Auths {
 
   signInWithGoogle() {
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-      prompt: 'select_account'
-    });
+    provider.addScope('email');
+    provider.addScope('profile');
     
     return signInWithPopup(this.auth, provider).then(async (result) => {
       const user = result.user;
