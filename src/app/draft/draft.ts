@@ -64,6 +64,7 @@ interface DraftPick {
   playerId?: string;
   playerName?: string;
   completed: boolean;
+  passed?: boolean;
 }
 
 interface Team {
