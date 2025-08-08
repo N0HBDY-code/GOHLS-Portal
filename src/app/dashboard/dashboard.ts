@@ -450,6 +450,7 @@ export class Dashboard implements OnInit, OnDestroy {
       }
       
       const settings = settingsSnap.data();
+      const currentSeason = settings['season'] || 1;
       const currentWeek = settings['week'] || 1;
       const currentDay = settings['day'] || 'D1';
       
@@ -457,6 +458,7 @@ export class Dashboard implements OnInit, OnDestroy {
       const gamesRef = collection(this.firestore, 'games');
       const gamesQuery = query(
         gamesRef,
+        where('season', '==', currentSeason),
         where('week', '==', currentWeek),
         where('day', '==', currentDay)
       );
@@ -496,7 +498,7 @@ export class Dashboard implements OnInit, OnDestroy {
       // Reset carousel index when games are loaded
       this.currentGameIndex = 0;
       
-      console.log(`🎮 Loaded ${this.todaysGames.length} games for Week ${currentWeek}, ${currentDay}`);
+      console.log(`🎮 Loaded ${this.todaysGames.length} games for Season ${currentSeason}, Week ${currentWeek}, ${currentDay}`);
       
       // Restart auto-rotation after games are loaded
       this.startAutoRotation();
