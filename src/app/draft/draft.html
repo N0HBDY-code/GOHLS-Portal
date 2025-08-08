@@ -57,7 +57,7 @@
         <button *ngIf="canManageDraft" 
                 class="btn btn-primary btn-sm"
                 (click)="showCreateClassModal = true">
-          <i class="fas fa-plus me-1"></i>Create Draft Class
+          <i class="fas fa-sync me-1"></i>Refresh Draft Classes
         </button>
       </div>
       <div class="card-body">
@@ -186,8 +186,17 @@
                                  class="team-logo-small me-2">
                             <span>{{ player.teamName }}</span>
                           </div>
-                          <span *ngIf="!player.teamId || player.teamId === 'none'" class="badge bg-secondary">
+                          <span *ngIf="player.draftStatus === 'eligible'" class="badge bg-info">
+                            Draft Eligible
+                          </span>
+                          <span *ngIf="player.draftStatus === 'drafted'" class="badge bg-success">
+                            Drafted
+                          </span>
+                          <span *ngIf="player.draftStatus === 'undrafted'" class="badge bg-secondary">
                             Undrafted
+                          </span>
+                          <span *ngIf="!player.draftStatus" class="badge bg-warning">
+                            No Status
                           </span>
                         </td>
                       </tr>

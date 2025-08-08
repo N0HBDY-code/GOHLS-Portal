@@ -141,11 +141,35 @@ export class Draft implements OnInit {
   indexError = false;
   draftClassError = false;
   draftClassErrorMessage = '';
+  
+  // Current league season
+  currentLeagueSeason = 1;
 
   constructor(
     private firestore: Firestore,
     private authService: Auths
   ) {}
+
+  async loadCurrentLeagueSeason() {
+    try {
+      const seasonRef = doc(this.firestore, 'leagueSettings/season');
+      const seasonSnap = await getDoc(seasonRef);
+      
+      if (seasonSnap.exists()) {
+        this.currentLeagueSeason = seasonSnap.data()['currentSeason'] || 1;
+      } else {
+        // Initialize season settings if they don't exist
+        await setDoc(seasonRef, {
+          currentSeason: 1,
+          createdDate: new Date()
+        });
+        this.currentLeagueSeason = 1;
+      }
+    } catch (error) {
+      console.error('Error loading current league season:', error);
+      this.currentLeagueSeason = 1;
+    }
+  }
 
   async ngOnInit() {
     // Check permissions
@@ -155,6 +179,9 @@ export class Draft implements OnInit {
       );
       this.isDeveloper = roles.includes('developer');
     });
+    
+    // Load current league season first
+    await this.loadCurrentLeagueSeason();
     
     // Load teams
     await this.loadTeams();
@@ -196,7 +223,15 @@ export class Draft implements OnInit {
       
       if (snapshot.empty) {
         // Create initial draft class for current season if none exist
-        await this.createInitialDraftClass(new Date().getFullYear());
+        await this.createInitialDraftClass(this.currentLeagueSeason);
+        await this.loadDraftClasses(); // Reload after creation
+        return;
+      }
+      
+      // Check if current season draft class exists
+      const currentSeasonExists = snapshot.docs.some(doc => doc.data()['season'] === this.currentLeagueSeason);
+      if (!currentSeasonExists) {
+        await this.createInitialDraftClass(this.currentLeagueSeason);
         await this.loadDraftClasses(); // Reload after creation
         return;
       }
@@ -551,7 +586,7 @@ export class Draft implements OnInit {
       const undraftedQuery = query(
         collection(this.firestore, 'players'),
         where('draftClass', '==', this.selectedDraftClassForDraft.season),
-        where('teamId', '==', 'none')
+        where('draftStatus', '==', 'eligible')
       );
       
       const undraftedSnap = await getDocs(undraftedQuery);
@@ -560,7 +595,8 @@ export class Draft implements OnInit {
       undraftedSnap.docs.forEach(docSnap => {
         batch.update(docSnap.ref, {
           draftStatus: 'undrafted',
-          freeAgent: true
+          freeAgent: true,
+          teamId: 'none'
         });
       });
       
@@ -583,7 +619,7 @@ export class Draft implements OnInit {
       const playersQuery = query(
         collection(this.firestore, 'players'),
         where('draftClass', '==', this.selectedDraftClassForDraft.season),
-        where('teamId', '==', 'none'),
+        where('draftStatus', '==', 'eligible'),
         where('status', '==', 'active')
       );
       
@@ -648,7 +684,8 @@ export class Draft implements OnInit {
         draftRound: this.selectedDraftPick.round,
         draftPick: this.selectedDraftPick.pick,
         draftSeason: this.selectedDraftPick.season,
-        draftStatus: 'drafted'
+        draftStatus: 'drafted',
+        freeAgent: false
       });
       
       // Add player to team roster

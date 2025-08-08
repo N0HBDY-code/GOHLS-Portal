@@ -529,7 +529,7 @@ export class Headquarters implements OnInit {
         status: 'active',
         createdDate: new Date(),
         draftClass: player.draftClass || currentSeason, // Use specified draft class or current season
-        draftStatus: 'eligible',
+        draftStatus: 'eligible', // Set as eligible for draft
         fightTendency: player['fight'],
         origin: player['origin'],
         hair: player['hair'],
