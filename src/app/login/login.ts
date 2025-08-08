@@ -44,7 +44,13 @@ export class Login {
 
   signInWithGoogle() {
     this.authService.signInWithGoogle()
-      .then(() => this.router.navigate(['/dashboard']))
-      .catch(err => alert('Google Sign-in failed: ' + err.message));
+      .then(() => {
+        console.log('Google Sign-in successful');
+        this.router.navigate(['/dashboard']);
+      })
+      .catch(err => {
+        console.error('Google Sign-in error:', err);
+        alert(err.message || 'Google Sign-in failed. Please try again.');
+      });
   }
 }
