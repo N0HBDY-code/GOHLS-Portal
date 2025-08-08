@@ -445,7 +445,9 @@ export class Dashboard implements OnInit, OnDestroy {
       const settingsSnap = await getDoc(settingsRef);
       
       if (!settingsSnap.exists()) {
+        console.log('❌ No game schedule settings found');
         this.todaysGames = [];
+        this.loadingGames = false;
         return;
       }
       
@@ -453,6 +455,8 @@ export class Dashboard implements OnInit, OnDestroy {
       const currentSeason = settings['season'] || 1;
       const currentWeek = settings['week'] || 1;
       const currentDay = settings['day'] || 'D1';
+      
+      console.log(`🎮 Loading games for Season ${currentSeason}, Week ${currentWeek}, ${currentDay}`);
       
       // Load games for the current week and day
       const gamesRef = collection(this.firestore, 'games');
@@ -464,9 +468,13 @@ export class Dashboard implements OnInit, OnDestroy {
       );
       const gamesSnapshot = await getDocs(gamesQuery);
       
+      console.log(`📊 Found ${gamesSnapshot.docs.length} games matching criteria`);
+      
       this.todaysGames = await Promise.all(
         gamesSnapshot.docs.map(async (gameDoc) => {
           const gameData = gameDoc.data();
+          
+          console.log(`🏒 Processing game: ${gameData['homeTeamId']} vs ${gameData['awayTeamId']}`);
           
           // Get team information
           const [homeTeamSnap, awayTeamSnap] = await Promise.all([
@@ -505,6 +513,7 @@ export class Dashboard implements OnInit, OnDestroy {
       
     } catch (error) {
       console.error('Error loading today\'s games:', error);
+      this.todaysGames = [];
     } finally {
       this.loadingGames = false;
     }
