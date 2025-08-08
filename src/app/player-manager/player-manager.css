@@ -56,6 +56,22 @@
   border-radius: 4px;
 }
 
+.team-logo-history {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.team-logo-timeline {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
 .stat-card {
   background: white;
   border-radius: 8px;
