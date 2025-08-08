@@ -8,12 +8,10 @@ import {
   onAuthStateChanged,
   sendPasswordResetEmail,
   User,
-  setPersistence,
-  browserLocalPersistence
+  connectAuthEmulator
 } from '@angular/fire/auth';
 import { Firestore, doc, setDoc, getDoc, collection, getDocs } from '@angular/fire/firestore';
 import { BehaviorSubject, combineLatest } from 'rxjs';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { map } from 'rxjs/operators';
 
 export interface UserInfo {
@@ -47,11 +45,7 @@ export class Auths {
   }
 
   constructor(private auth: Auth, private firestore: Firestore) {
-    // Set authentication persistence to local storage
-    setPersistence(this.auth, browserLocalPersistence).catch(error => {
-      console.error('Error setting auth persistence:', error);
-    });
-    
+    // Authentication persistence is enabled by default in Firebase v9+
     onAuthStateChanged(this.auth, async (user) => {
       this.userSubject.next(user);
 

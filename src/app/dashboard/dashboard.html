@@ -207,18 +207,65 @@
           </div>
           
           <div *ngFor="let transaction of recentTransactions" class="transaction-item mb-3 p-3 border rounded">
-            <div class="d-flex align-items-start">
-              <div class="transaction-icon me-3">
-                <img *ngIf="transaction.teamLogo" 
-                     [src]="transaction.teamLogo" 
-                     [alt]="transaction.teamName"
-                     class="team-logo-transaction">
-                <i *ngIf="!transaction.teamLogo" 
-                   [class]="getTransactionIcon(transaction.type) + ' ' + getTransactionColor(transaction.type)"></i>
-              </div>
-              <div class="flex-grow-1">
-                <p class="mb-1">{{ transaction.description }}</p>
+            <!-- Trade Transaction Layout -->
+            <div *ngIf="transaction.type === 'trade' && transaction.tradeData" class="trade-transaction">
+              <div class="trade-header mb-2">
+                <h6 class="mb-0">{{ transaction.description }}</h6>
                 <small class="text-muted">{{ getTimeAgo(transaction.timestamp) }}</small>
+              </div>
+              <div class="trade-details d-flex justify-content-between align-items-start">
+                <!-- From Team (Left Side) -->
+                <div class="trade-side text-center" style="flex: 1;">
+                  <img *ngIf="transaction.tradeData.fromTeam.logo" 
+                       [src]="transaction.tradeData.fromTeam.logo" 
+                       [alt]="transaction.tradeData.fromTeam.name"
+                       class="team-logo-trade mb-2">
+                  <div class="team-name-small mb-1">{{ transaction.tradeData.fromTeam.name }}</div>
+                  <div class="traded-players">
+                    <small class="text-muted d-block">Traded:</small>
+                    <div *ngFor="let player of transaction.tradeData.offeredPlayers" class="player-name-small">
+                      {{ player }}
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Trade Arrow -->
+                <div class="trade-arrow mx-3 align-self-center">
+                  <i class="fas fa-exchange-alt text-primary fa-lg"></i>
+                </div>
+                
+                <!-- To Team (Right Side) -->
+                <div class="trade-side text-center" style="flex: 1;">
+                  <img *ngIf="transaction.tradeData.toTeam.logo" 
+                       [src]="transaction.tradeData.toTeam.logo" 
+                       [alt]="transaction.tradeData.toTeam.name"
+                       class="team-logo-trade mb-2">
+                  <div class="team-name-small mb-1">{{ transaction.tradeData.toTeam.name }}</div>
+                  <div class="traded-players">
+                    <small class="text-muted d-block">Traded:</small>
+                    <div *ngFor="let player of transaction.tradeData.requestedPlayers" class="player-name-small">
+                      {{ player }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Regular Transaction Layout -->
+            <div *ngIf="transaction.type !== 'trade'" class="regular-transaction">
+              <div class="d-flex align-items-start">
+                <div class="transaction-icon me-3">
+                  <img *ngIf="transaction.teamLogo" 
+                       [src]="transaction.teamLogo" 
+                       [alt]="transaction.teamName"
+                       class="team-logo-transaction">
+                  <i *ngIf="!transaction.teamLogo" 
+                     [class]="getTransactionIcon(transaction.type) + ' ' + getTransactionColor(transaction.type)"></i>
+                </div>
+                <div class="flex-grow-1">
+                  <p class="mb-1">{{ transaction.description }}</p>
+                  <small class="text-muted">{{ getTimeAgo(transaction.timestamp) }}</small>
+                </div>
               </div>
             </div>
           </div>
