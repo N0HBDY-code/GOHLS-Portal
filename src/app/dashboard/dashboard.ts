@@ -17,12 +17,27 @@ interface Player {
   teamName?: string;
 }
 
+interface User {
+  id: string;
+  displayName: string;
+  email: string;
+  createdDate: any;
+  player?: {
+    firstName: string;
+    lastName: string;
+    position: string;
+    teamName?: string;
+  };
+}
+
 interface Transaction {
   id: string;
   type: 'trade' | 'signing' | 'retirement';
   description: string;
   timestamp: any;
   playersInvolved: string[];
+  teamLogo?: string;
+  teamName?: string;
 }
 
 interface GameLineup {
@@ -54,10 +69,10 @@ export class Dashboard implements OnInit, OnDestroy {
   today: Date = new Date();
   
   // New dashboard data
-  newestPlayers: Player[] = [];
+  newestUsers: User[] = [];
   recentTransactions: Transaction[] = [];
   todaysGames: GameLineup[] = [];
-  loadingPlayers = false;
+  loadingUsers = false;
   loadingTransactions = false;
   loadingGames = false;
 
@@ -78,7 +93,7 @@ export class Dashboard implements OnInit, OnDestroy {
     });
 
     await Promise.all([
-      this.loadNewestPlayers(),
+      this.loadNewestUsers(),
       this.loadRecentTransactions(),
       this.loadTodaysGames()
     ]);
@@ -159,65 +174,93 @@ export class Dashboard implements OnInit, OnDestroy {
     }
   }
 
-  async loadNewestPlayers(): Promise<void> {
-    this.loadingPlayers = true;
+  async loadNewestUsers(): Promise<void> {
+    this.loadingUsers = true;
     try {
-      const playersRef = collection(this.firestore, 'players');
-      const q = query(
-        playersRef, 
-        where('status', '==', 'active'),
-        orderBy('createdDate', 'desc'), 
-        limit(5) // Limit to 5 most recent
-      );
-      const snapshot = await getDocs(q);
+      const usersRef = collection(this.firestore, 'users');
+      const snapshot = await getDocs(usersRef);
       
-      this.newestPlayers = await Promise.all(
-        snapshot.docs.map(async (playerDoc) => {
-          const data = playerDoc.data();
-          let teamName = 'Free Agent';
+      // Get all users and sort by creation date (using uid timestamp as fallback)
+      const allUsers = await Promise.all(
+        snapshot.docs.map(async (userDoc) => {
+          const userData = userDoc.data();
           
-          if (data['teamId'] && data['teamId'] !== 'none') {
-            const teamRef = doc(this.firestore, `teams/${data['teamId']}`);
-            const teamSnap = await getDoc(teamRef);
-            if (teamSnap.exists()) {
-              const teamData = teamSnap.data();
-              teamName = `${teamData['city']} ${teamData['mascot']}`;
+          // Try to find their active player
+          let player = undefined;
+          try {
+            const playersQuery = query(
+              collection(this.firestore, 'players'),
+              where('userId', '==', userDoc.id),
+              where('status', '==', 'active'),
+              limit(1)
+            );
+            const playerSnapshot = await getDocs(playersQuery);
+            
+            if (!playerSnapshot.empty) {
+              const playerData = playerSnapshot.docs[0].data();
+              let teamName = 'Free Agent';
+              
+              if (playerData['teamId'] && playerData['teamId'] !== 'none') {
+                const teamRef = doc(this.firestore, `teams/${playerData['teamId']}`);
+                const teamSnap = await getDoc(teamRef);
+                if (teamSnap.exists()) {
+                  const teamData = teamSnap.data();
+                  teamName = `${teamData['city']} ${teamData['mascot']}`;
+                }
+              }
+              
+              player = {
+                firstName: playerData['firstName'] || '',
+                lastName: playerData['lastName'] || '',
+                position: playerData['position'] || '',
+                teamName
+              };
             }
+          } catch (error) {
+            console.error('Error loading player for user:', error);
           }
           
+          // Use account creation date or fallback to uid timestamp
+          const createdDate = userData['createdAt'] || new Date(parseInt(userDoc.id.substring(0, 8), 16) * 1000);
+          
           return {
-            id: playerDoc.id,
-            firstName: data['firstName'] || '',
-            lastName: data['lastName'] || '',
-            position: data['position'] || '',
-            archetype: data['archetype'] || '',
-            age: data['age'] || 19,
-            createdDate: data['createdDate'],
-            teamId: data['teamId'] || 'none',
-            teamName
+            id: userDoc.id,
+            displayName: userData['displayName'] || 'Unknown User',
+            email: userData['email'] || '',
+            createdDate,
+            player
           };
         })
       );
+      
+      // Sort by creation date (newest first) and take top 5
+      this.newestUsers = allUsers
+        .sort((a, b) => {
+          const aTime = a.createdDate instanceof Date ? a.createdDate : new Date(a.createdDate);
+          const bTime = b.createdDate instanceof Date ? b.createdDate : new Date(b.createdDate);
+          return bTime.getTime() - aTime.getTime();
+        })
+        .slice(0, 5);
+        
     } catch (error) {
-      console.error('Error loading newest players:', error);
+      console.error('Error loading newest users:', error);
     } finally {
-      this.loadingPlayers = false;
+      this.loadingUsers = false;
     }
   }
 
   async loadRecentTransactions(): Promise<void> {
     this.loadingTransactions = true;
     try {
-      // Load recent player history entries for transactions
       const allTransactions: Transaction[] = [];
       
-      // Get recent player history entries
+      // 1. Load player history for signings and retirements
       const playersRef = collection(this.firestore, 'players');
       const playersSnapshot = await getDocs(playersRef);
       
       for (const playerDoc of playersSnapshot.docs) {
         const historyRef = collection(this.firestore, `players/${playerDoc.id}/history`);
-        const historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(2)); // Reduced from 3 to 2
+        const historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(3));
         const historySnapshot = await getDocs(historyQuery);
         
         for (const historyDoc of historySnapshot.docs) {
@@ -226,14 +269,31 @@ export class Dashboard implements OnInit, OnDestroy {
           
           if (['signed', 'traded', 'retired'].includes(historyData['action'])) {
             let description = '';
+            let teamLogo = '';
+            let teamName = '';
             const playerName = `${playerData['firstName']} ${playerData['lastName']}`;
+            
+            // Get team info if available
+            if (historyData['teamId'] && historyData['teamId'] !== 'none') {
+              try {
+                const teamRef = doc(this.firestore, `teams/${historyData['teamId']}`);
+                const teamSnap = await getDoc(teamRef);
+                if (teamSnap.exists()) {
+                  const teamData = teamSnap.data();
+                  teamName = `${teamData['city']} ${teamData['mascot']}`;
+                  teamLogo = teamData['logoUrl'] || '';
+                }
+              } catch (error) {
+                console.error('Error loading team for transaction:', error);
+              }
+            }
             
             switch (historyData['action']) {
               case 'signed':
-                description = `${playerName} signed with a team`;
+                description = `${playerName} signed with ${teamName || 'a team'}`;
                 break;
               case 'traded':
-                description = `${playerName} was traded`;
+                description = `${playerName} was traded to ${teamName || 'a team'}`;
                 break;
               case 'retired':
                 description = `${playerName} announced retirement`;
@@ -245,10 +305,86 @@ export class Dashboard implements OnInit, OnDestroy {
               type: historyData['action'] as 'trade' | 'signing' | 'retirement',
               description,
               timestamp: historyData['timestamp'],
-              playersInvolved: [playerDoc.id]
+              playersInvolved: [playerDoc.id],
+              teamLogo,
+              teamName
             });
           }
         }
+      }
+      
+      // 2. Load trade offers that have been approved
+      try {
+        const tradesRef = collection(this.firestore, 'tradeOffers');
+        const approvedTradesQuery = query(
+          tradesRef, 
+          where('status', '==', 'approved'),
+          orderBy('timestamp', 'desc'),
+          limit(10)
+        );
+        const tradesSnapshot = await getDocs(approvedTradesQuery);
+        
+        for (const tradeDoc of tradesSnapshot.docs) {
+          const tradeData = tradeDoc.data();
+          
+          // Get team names
+          let fromTeamName = 'Unknown Team';
+          let toTeamName = 'Unknown Team';
+          let fromTeamLogo = '';
+          let toTeamLogo = '';
+          
+          try {
+            const [fromTeamSnap, toTeamSnap] = await Promise.all([
+              getDoc(doc(this.firestore, `teams/${tradeData['fromTeamId']}`)),
+              getDoc(doc(this.firestore, `teams/${tradeData['toTeamId']}`))
+            ]);
+            
+            if (fromTeamSnap.exists()) {
+              const fromTeamData = fromTeamSnap.data();
+              fromTeamName = `${fromTeamData['city']} ${fromTeamData['mascot']}`;
+              fromTeamLogo = fromTeamData['logoUrl'] || '';
+            }
+            
+            if (toTeamSnap.exists()) {
+              const toTeamData = toTeamSnap.data();
+              toTeamName = `${toTeamData['city']} ${toTeamData['mascot']}`;
+              toTeamLogo = toTeamData['logoUrl'] || '';
+            }
+          } catch (error) {
+            console.error('Error loading team data for trade:', error);
+          }
+          
+          // Get player names
+          const playerNames: string[] = [];
+          const allPlayerIds = [...(tradeData['playersOffered'] || []), ...(tradeData['playersRequested'] || [])];
+          
+          for (const playerId of allPlayerIds) {
+            try {
+              const playerRef = doc(this.firestore, `players/${playerId}`);
+              const playerSnap = await getDoc(playerRef);
+              if (playerSnap.exists()) {
+                const playerData = playerSnap.data();
+                playerNames.push(`${playerData['firstName']} ${playerData['lastName']}`);
+              }
+            } catch (error) {
+              console.error('Error loading player for trade:', error);
+            }
+          }
+          
+          const description = `Trade completed between ${fromTeamName} and ${toTeamName}${playerNames.length > 0 ? ` involving ${playerNames.join(', ')}` : ''}`;
+          
+          allTransactions.push({
+            id: tradeDoc.id,
+            type: 'trade',
+            description,
+            timestamp: tradeData['timestamp'],
+            playersInvolved: allPlayerIds,
+            teamLogo: fromTeamLogo, // Show the initiating team's logo
+            teamName: fromTeamName
+          });
+        }
+      } catch (error) {
+        console.error('Error loading trade transactions:', error);
       }
       
       // Sort all transactions by timestamp and take the 5 most recent
