@@ -54,11 +54,6 @@
         <h5 class="mb-0">
           <i class="fas fa-users me-2"></i>Draft Classes
         </h5>
-        <button *ngIf="canManageDraft" 
-                class="btn btn-primary btn-sm"
-                (click)="showCreateClassModal = true">
-          <i class="fas fa-sync me-1"></i>Refresh Draft Classes
-        </button>
       </div>
       <div class="card-body">
         <div *ngIf="loadingClasses" class="text-center py-4">
@@ -357,6 +352,25 @@
 
           <!-- Round Picks -->
           <div class="draft-round-picks">
+            <!-- Draft Order Display -->
+            <div *ngIf="selectedDraftClassForDraft?.draftOrderSet && selectedDraftClassForDraft?.draftOrder" class="draft-order-display mb-3 p-3 bg-light border rounded">
+              <h6 class="mb-2">
+                <i class="fas fa-sort me-1"></i>Draft Order for Season {{ selectedDraftClassForDraft.season }}
+              </h6>
+              <div class="row">
+                <div class="col-md-2" *ngFor="let teamId of selectedDraftClassForDraft.draftOrder; let i = index">
+                  <div class="draft-order-item text-center p-2 border rounded">
+                    <div class="draft-position-number">{{ i + 1 }}</div>
+                    <img *ngIf="getTeamLogo(teamId)" 
+                         [src]="getTeamLogo(teamId)" 
+                         alt="Team Logo"
+                         class="team-logo-draft-order mb-1">
+                    <div class="team-name-small">{{ getTeamName(teamId) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead>

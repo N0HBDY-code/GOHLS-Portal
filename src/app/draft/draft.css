@@ -128,3 +128,58 @@
   .card-body { padding: 1rem; }
   .nav-tabs .nav-link { padding: 0.75rem 1rem; }
 }
+
+/* Draft order display styling */
+.draft-order-display {
+  background: #f8f9fa !important;
+  border: 2px solid #dee2e6 !important;
+}
+
+.draft-order-item {
+  background: white;
+  border: 1px solid #dee2e6 !important;
+  transition: all 0.2s ease;
+  margin-bottom: 0.5rem;
+}
+
+.draft-order-item:hover {
+  border-color: #0d6efd !important;
+  box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+.draft-position-number {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0d6efd;
+  margin-bottom: 0.5rem;
+}
+
+.team-logo-draft-order {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.team-name-small {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #495057;
+  line-height: 1.2;
+}
+
+@media (max-width: 768px) {
+  .draft-order-display .col-md-2 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+  
+  .team-logo-draft-order {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .team-name-small {
+    font-size: 0.7rem;
+  }
+}
