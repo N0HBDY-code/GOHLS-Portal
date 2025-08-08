@@ -358,11 +358,10 @@ export class Draft implements OnInit {
 
       // Load draft picks for this draft class
       const picksRef = collection(this.firestore, 'draftPicks');
+      // Use simple query without compound ordering to avoid index requirements
       const picksQuery = query(
         picksRef, 
-        where('draftClassId', '==', this.selectedDraftClassForDraft.id),
-        orderBy('round'), 
-        orderBy('pick')
+        where('draftClassId', '==', this.selectedDraftClassForDraft.id)
       );
       const picksSnap = await getDocs(picksQuery);
       
@@ -413,6 +412,13 @@ export class Draft implements OnInit {
       }));
       
       // Determine current round and pick
+      // Sort the picks manually after loading to avoid index requirements
+      this.draftPicks.sort((a, b) => {
+        if (a.round !== b.round) {
+          return a.round - b.round;
+        }
+        return a.pick - b.pick;
+      });
       this.updateCurrentDraftPosition();
       
       // Check if draft is in progress
