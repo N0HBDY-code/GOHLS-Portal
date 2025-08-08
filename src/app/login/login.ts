@@ -41,20 +41,4 @@ export class Login {
         this.errorMessage = 'Login failed: ' + err.message;
       });
   }
-
-  signInWithGoogle() {
-    this.authService.signInWithGoogle()
-      .then(() => {
-        console.log('Google Sign-in successful');
-        this.router.navigate(['/dashboard']);
-      })
-      .catch(err => {
-        console.error('Google Sign-in error:', err);
-        if (err.code === 'auth/popup-blocked') {
-          this.errorMessage = 'Pop-up was blocked by browser. Please allow pop-ups and try again.';
-        } else {
-          this.errorMessage = err.message || 'Google Sign-in failed. Please try again.';
-        }
-      });
-  }
 }

@@ -45,24 +45,6 @@
   transform: translateY(-1px);
 }
 
-.google-signin-btn {
-  transition: transform 0.2s ease;
-}
-
-.google-signin-btn:hover {
-  transform: translateY(-2px);
-}
-
-.google-signin-btn .card {
-  border: 2px solid #e9ecef;
-  transition: all 0.2s ease;
-}
-
-.google-signin-btn:hover .card {
-  border-color: #4285f4;
-  box-shadow: 0 4px 12px rgba(66, 133, 244, 0.2);
-}
-
 .text-danger {
   color: #dc3545 !important;
 }

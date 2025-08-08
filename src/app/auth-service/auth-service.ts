@@ -128,83 +128,10 @@ export class Auths {
   forgotPassword(email: string) {
     return sendPasswordResetEmail(this.auth, email);
   }
-
   logout() {
     this.userSubject.next(null);
     this.rolesSubject.next([]);
     this.viewAsRoleSubject.next(null);
     return signOut(this.auth);
-  }
-
-  signInWithGoogle() {
-    const provider = new GoogleAuthProvider();
-    provider.addScope('https://www.googleapis.com/auth/userinfo.email');
-    provider.addScope('https://www.googleapis.com/auth/userinfo.profile');
-    
-    // Add additional configuration
-    provider.setCustomParameters({
-      prompt: 'select_account'
-    });
-    
-    return signInWithPopup(this.auth, provider).then(async (result) => {
-      const user = result.user;
-      
-      if (!user) {
-        throw new Error('No user returned from Google Sign-in');
-      }
-      
-      this.userSubject.next(user);
-
-      const userDoc = doc(this.firestore, 'users', user.uid);
-      const snapshot = await getDoc(userDoc);
-
-      if (!snapshot.exists()) {
-        // Ensure we have required user data
-        const displayName = user.displayName || user.email?.split('@')[0] || 'User';
-        const email = user.email;
-        
-        if (!email) {
-          throw new Error('No email provided by Google');
-        }
-        
-        await setDoc(userDoc, {
-          uid: user.uid,
-          displayName: displayName,
-          email: email,
-          roles: ['viewer'],
-          provider: 'google',
-          createdAt: new Date()
-        });
-        
-        // Also create username mapping if displayName exists
-        if (displayName) {
-          await setDoc(doc(this.firestore, 'usernames', displayName), {
-            email: email,
-            uid: user.uid
-          });
-        }
-        
-        this.rolesSubject.next(['viewer']);
-      } else {
-        const data = snapshot.data();
-        const roles = Array.isArray(data?.['roles']) ? data['roles'] : [];
-        this.rolesSubject.next(roles);
-      }
-
-      return user;
-    }).catch((error) => {
-      console.error('Google Sign-in error:', error);
-      
-      // Handle specific error codes
-      if (error.code === 'auth/popup-closed-by-user') {
-        throw new Error('Sign-in was cancelled');
-      } else if (error.code === 'auth/popup-blocked') {
-        throw new Error('Pop-up was blocked by browser. Please allow pop-ups and try again.');
-      } else if (error.code === 'auth/unauthorized-domain') {
-        throw new Error('This domain is not authorized for Google Sign-in');
-      } else {
-        throw new Error('Google Sign-in failed: ' + (error.message || 'Unknown error'));
-      }
-    });
   }
 }
