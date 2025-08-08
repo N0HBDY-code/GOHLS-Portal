@@ -38,7 +38,7 @@ export class Login {
       })
       .catch(err => {
         console.error('Login failed:', err);
-        alert('Login failed: ' + err.message);
+        this.errorMessage = 'Login failed: ' + err.message;
       });
   }
 
@@ -50,7 +50,11 @@ export class Login {
       })
       .catch(err => {
         console.error('Google Sign-in error:', err);
-        alert(err.message || 'Google Sign-in failed. Please try again.');
+        if (err.code === 'auth/popup-blocked') {
+          this.errorMessage = 'Pop-up was blocked by browser. Please allow pop-ups and try again.';
+        } else {
+          this.errorMessage = err.message || 'Google Sign-in failed. Please try again.';
+        }
       });
   }
 }
