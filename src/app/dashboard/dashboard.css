@@ -35,6 +35,43 @@
   min-height: 320px;
 }
 
+.carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  pointer-events: none;
+}
+
+.carousel-btn {
+  background: rgba(73, 80, 87, 0.8);
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  color: white;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.carousel-btn:hover {
+  background: rgba(73, 80, 87, 1);
+  transform: scale(1.1);
+}
+
+.carousel-btn-prev {
+  left: 1rem;
+}
+
+.carousel-btn-next {
+  right: 1rem;
+}
+
 .game-card-single {
   width: 100%;
   background: #fff;
@@ -43,6 +80,64 @@
   box-shadow: 0 8px 25px rgba(0,0,0,.1);
   border: 2px solid #e9ecef;
   cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.game-card-single:hover {
+  transform: translateY(-2px);
+}
+
+.game-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.game-week-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.week-badge, .day-badge {
+  background: #6c757d;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.game-status {
+  position: absolute;
+  right: 0;
+}
+
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.status-badge.live {
+  background: #dc3545;
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.status-badge.final {
+  background: #198754;
+  color: white;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
 }
 
 .teams-container {
@@ -61,12 +156,28 @@
   max-width: 200px;
 }
 
+.team-display.away-team {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.team-display.home-team {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.team-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
 .team-logo {
   width: 80px;
   height: 80px;
   object-fit: contain;
   border-radius: 12px;
   margin-bottom: 1rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .team-name {
@@ -76,13 +187,40 @@
   margin-bottom: 0.5rem;
 }
 
+.team-record {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.vs-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.vs-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .vs-text {
   font-size: 2.5rem;
   font-weight: 900;
   color: #495057;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .score-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.score-line {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -98,23 +236,67 @@
   border: 2px solid #dee2e6;
   min-width: 60px;
   text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.carousel-btn {
-  background: #495057;
-  border: none;
+.score-separator {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #6c757d;
+}
+
+.carousel-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.indicator-dot {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  width: 48px;
-  height: 48px;
-  color: white;
+  border: none;
+  background: #dee2e6;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.indicator-dot.active {
+  background: #0d6efd;
+  transform: scale(1.2);
+}
+
+.indicator-dot:hover {
+  background: #6c757d;
+}
+
+.auto-rotation-info {
+  text-align: center;
+  margin-top: 1rem;
 }
 
 @media (max-width: 768px) {
   .container { padding: 1rem 0; }
   .games-carousel-container { padding: 1.5rem; min-height: 280px; }
   .teams-container { flex-direction: column; gap: 1.5rem; }
+  .team-display.away-team,
+  .team-display.home-team {
+    align-items: center;
+    text-align: center;
+  }
   .team-logo { width: 60px; height: 60px; }
   .vs-text { font-size: 2rem; }
   .away-score, .home-score { font-size: 2rem; }
+  .carousel-nav {
+    position: static;
+    transform: none;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .carousel-btn-prev,
+  .carousel-btn-next {
+    position: static;
+  }
 }
