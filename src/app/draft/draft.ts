@@ -48,6 +48,7 @@ interface DraftPlayer {
   draftRound?: number;
   draftPick?: number;
   draftSeason?: number;
+  draftStatus?: string;
 }
 
 interface DraftPick {
@@ -149,6 +150,27 @@ export class Draft implements OnInit {
     private firestore: Firestore,
     private authService: Auths
   ) {}
+
+  async loadCurrentLeagueSeason() {
+    try {
+      const seasonRef = doc(this.firestore, 'leagueSettings/season');
+      const seasonSnap = await getDoc(seasonRef);
+      
+      if (seasonSnap.exists()) {
+        this.currentLeagueSeason = seasonSnap.data()['currentSeason'] || 1;
+      } else {
+        // Initialize season settings if they don't exist
+        await setDoc(seasonRef, {
+          currentSeason: 1,
+          createdDate: new Date()
+        });
+        this.currentLeagueSeason = 1;
+      }
+    } catch (error) {
+      console.error('Error loading current league season:', error);
+      this.currentLeagueSeason = 1;
+    }
+  }
 
   async loadCurrentLeagueSeason() {
     try {
@@ -289,7 +311,8 @@ export class Draft implements OnInit {
             teamLogo,
             draftRound: playerData['draftRound'],
             draftPick: playerData['draftPick'],
-            draftSeason: playerData['draftSeason']
+            draftSeason: playerData['draftSeason'],
+            draftStatus: playerData['draftStatus']
           };
         }));
         
