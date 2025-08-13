@@ -750,6 +750,8 @@ export class Analytics implements OnInit {
           return data['teamId'] && data['teamId'] !== 'none';
         })
         .map(async (playerDoc) => {
+        }
+        )
       // Cache player stats
       this.playerStatsCache = this.playerStats;
       this.updateCacheTime();
