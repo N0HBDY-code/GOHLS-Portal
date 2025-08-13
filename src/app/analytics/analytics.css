@@ -405,3 +405,84 @@
     padding: 0.375rem 0.5rem;
   }
 }
+
+/* Team Analytics Specific Styling */
+.stat-box {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+  background: var(--bs-secondary-bg);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--bs-secondary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bs-emphasis-color);
+  line-height: 1.2;
+}
+
+/* Card header color overrides for analytics */
+.card-header.bg-primary {
+  background: linear-gradient(45deg, #0d6efd, #6610f2) !important;
+}
+
+.card-header.bg-success {
+  background: linear-gradient(45deg, #198754, #20c997) !important;
+}
+
+.card-header.bg-danger {
+  background: linear-gradient(45deg, #dc3545, #fd5e72) !important;
+}
+
+.card-header.bg-warning {
+  background: linear-gradient(45deg, #ffc107, #fd7e14) !important;
+}
+
+.card-header.bg-info {
+  background: linear-gradient(45deg, #0dcaf0, #39c0ed) !important;
+}
+
+.card-header.bg-secondary {
+  background: linear-gradient(45deg, #6c757d, #adb5bd) !important;
+}
+
+.card-header.bg-dark {
+  background: linear-gradient(45deg, #212529, #495057) !important;
+}
+
+/* Responsive stat boxes */
+@media (max-width: 768px) {
+  .stat-box {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .stat-value {
+    font-size: 1.25rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .row.mb-4 .col-md-6 {
+    margin-bottom: 1rem;
+  }
+}
