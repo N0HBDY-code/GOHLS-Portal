@@ -781,35 +781,6 @@ export class Analytics implements OnInit {
     }
   }
 
-  exportSelectedGameToCSV() {
-    if (!this.selectedExportGameId) return;
-    
-    const game = this.exportGames.find(g => g.id === this.selectedExportGameId);
-    if (!game) return;
-    
-    const csvContent = this.generateCSV(game);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const fileName = `game-${game.id}-${game.date?.toDate?.() ? game.date.toDate().toISOString().split('T')[0] : 'unknown'}.csv`;
-    this.downloadCSV(csvContent, fileName);
-  }
-
-  private generateCSV(game: Game): string {
-    const headers = ['Player Name', 'Points', 'Assists', 'Rebounds'];
-    const rows = game.players.map(player => [
-      player.name,
-      player.points.toString(),
-      player.assists.toString(),
-      player.rebounds.toString()
-    ]);
-    
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-    
-    return csvContent;
-  }
-
   async loadPlayerStatsOptimized() {
     // Return cached data if valid
     if (this.playerStatsCache && this.isCacheValid()) {
