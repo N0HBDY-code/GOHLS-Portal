@@ -848,4 +848,70 @@ export class Headquarters implements OnInit {
       this.loading = false;
     }
   }
+
+  async loadAllTeams() {
+    try {
+      const teamsRef = collection(this.firestore, 'teams');
+      const snapshot = await getDocs(teamsRef);
+      
+      this.allTeams = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: `${data['city']} ${data['mascot']}`,
+          city: data['city'],
+          mascot: data['mascot'],
+          league: data['league'] || 'major',
+          conference: data['conference'],
+          division: data['division']
+        };
+      });
+    } catch (error) {
+      console.error('Error loading all teams:', error);
+    }
+  }
+
+  async assignGmRole() {
+    if (!this.selectedUserForGm || !this.selectedTeamForGm) return;
+
+    this.loading = true;
+    try {
+      const userRef = doc(this.firestore, 'users', this.selectedUserForGm.uid);
+      const teamSpecificRole = `gm:${this.selectedTeamForGm}`;
+      
+      await updateDoc(userRef, {
+        roles: arrayUnion(teamSpecificRole)
+      });
+
+      // Update local display
+      this.selectedUserForGm.roles.push(teamSpecificRole);
+      
+      this.success = `GM role assigned successfully for ${this.getTeamNameById(this.selectedTeamForGm)}`;
+      setTimeout(() => this.success = '', 3000);
+      
+      this.showGmRoleModal = false;
+      this.selectedUserForGm = null;
+      this.selectedTeamForGm = '';
+    } catch (error) {
+      console.error('Error assigning GM role:', error);
+      this.error = 'Failed to assign GM role';
+      setTimeout(() => this.error = '', 3000);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  getTeamNameById(teamId: string): string {
+    const team = this.allTeams.find(t => t.id === teamId);
+    return team ? team.name : 'Unknown Team';
+  }
+
+  formatRoleDisplay(role: string): string {
+    if (role.startsWith('gm:')) {
+      const teamId = role.split(':')[1];
+      const teamName = this.getTeamNameById(teamId);
+      return `GM - ${teamName}`;
+    }
+    return role;
+  }
 }

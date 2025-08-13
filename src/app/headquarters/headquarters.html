@@ -353,7 +353,7 @@
                 <div class="mt-2">
                   <span *ngFor="let role of selectedUser.roles" 
                         class="badge bg-secondary me-2 mb-2">
-                    {{ role }}
+                    {{ formatRoleDisplay(role) }}
                     <button class="btn btn-sm text-white ms-1" 
                             (click)="removeRole(role)"
                             [disabled]="loading">
