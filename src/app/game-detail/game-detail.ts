@@ -37,6 +37,8 @@ interface PlayerStats {
   fot: number;
   fow: number;
   foPercentage: number;
+  minutes: number;
+  seconds: number;
 }
 
 interface RosterData {
