@@ -232,26 +232,40 @@ export class GameDetail implements OnInit {
   async saveGameData() {
     if (!this.game || !this.canEditScores) return;
 
-    const gameData = {
-      homeScore: this.homeScore,
-      awayScore: this.awayScore,
-      period: this.currentPeriod,
-      homeStats: this.homeStats,
-      awayStats: this.awayStats,
-      homePlayerStats: this.createPlayerStatsMap(this.homePlayerStats),
-      awayPlayerStats: this.createPlayerStatsMap(this.awayPlayerStats)
-    };
+    try {
+      const gameData = {
+        homeScore: this.homeScore,
+        awayScore: this.awayScore,
+        period: this.currentPeriod,
+        homeStats: this.homeStats,
+        awayStats: this.awayStats,
+        homePlayerStats: this.createPlayerStatsMap(this.homePlayerStats),
+        awayPlayerStats: this.createPlayerStatsMap(this.awayPlayerStats)
+      };
 
-    const homeGameRef = doc(this.firestore, `teams/${this.game.homeTeamId}/games/${this.gameId}`);
-    const awayGameRef = doc(this.firestore, `teams/${this.game.awayTeamId}/games/${this.gameId}`);
+      // Update the main games collection
+      const mainGameRef = doc(this.firestore, `games/${this.gameId}`);
+      
+      // Update team-specific game records
+      const homeGameRef = doc(this.firestore, `teams/${this.game.homeTeamId}/games/${this.gameId}`);
+      const awayGameRef = doc(this.firestore, `teams/${this.game.awayTeamId}/games/${this.gameId}`);
 
-    await Promise.all([
-      updateDoc(homeGameRef, gameData),
-      updateDoc(awayGameRef, gameData)
-    ]);
+      // Update all three locations
+      await Promise.all([
+        updateDoc(mainGameRef, gameData),
+        updateDoc(homeGameRef, gameData),
+        updateDoc(awayGameRef, gameData)
+      ]);
 
-    await this.loadGameData();
-    this.isEditing = false;
+      console.log('Game data saved successfully:', gameData);
+      
+      this.isEditing = false;
+      await this.loadGameData();
+      
+    } catch (error) {
+      console.error('Error saving game data:', error);
+      alert('Failed to save game data. Please try again.');
+    }
   }
 
   createPlayerStatsMap(playerStats: PlayerStats[]): Record<string, any> {
