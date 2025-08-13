@@ -162,7 +162,6 @@
 
 .team-display.home-team {
   justify-content: flex-end;
-  flex-direction: row-reverse;
 }
 
 .team-info {
@@ -177,7 +176,15 @@
 }
 
 .team-display.home-team .team-info {
-  text-align: right !important;
+  text-align: right;
+}
+
+.team-display.home-team .team-logo {
+  order: 2;
+}
+
+.team-display.home-team .team-info {
+  order: 1;
 }
 
 .team-logo {
