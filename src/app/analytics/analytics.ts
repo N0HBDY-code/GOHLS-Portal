@@ -61,7 +61,7 @@ interface Conference {
   styleUrls: ['./analytics.css']
 })
 export class Analytics implements OnInit {
-  currentView: 'standings' | 'analytics' | 'reports' = 'standings';
+  currentView: 'standings' | 'playerstats' | 'analytics' | 'reports' = 'standings';
   
   // Player stats properties
   playerStatsView: 'goals' | 'assists' | 'points' | 'points60' | 'toi' | 'shots' | 'ppg' | 'shg' | 'hits' | 'pim' | 'possession' | 'plusminus' | 'saves' | 'savepct' | 'shutouts' | 'gaa' = 'goals';
@@ -128,6 +128,9 @@ export class Analytics implements OnInit {
 
   private firestore = inject(Firestore);
   private authService = inject(Auths);
+
+  // Expose Math to template
+  Math = Math;
 
   async ngOnInit() {
     // Check permissions
@@ -709,5 +712,17 @@ export class Analytics implements OnInit {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+  }
+
+  // Helper method for position colors
+  getPositionColor(position: string): string {
+    switch (position) {
+      case 'G': return '#dc3545'; // Red
+      case 'D': return '#fd7e14'; // Orange
+      case 'C': return '#28a745'; // Green
+      case 'LW': return '#17a2b8'; // Teal
+      case 'RW': return '#007bff'; // Blue
+      default: return '#6c757d'; // Gray
+    }
   }
 }
