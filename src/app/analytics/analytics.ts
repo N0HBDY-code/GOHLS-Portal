@@ -451,17 +451,18 @@ export class Analytics implements OnInit {
   async loadPlayerStats() {
     this.loadingPlayerStats = true;
     try {
-      // Load all active players with their game stats
+      // Load all active players first, then filter out 'none' teamId in code
       const playersRef = collection(this.firestore, 'players');
-      const playersQuery = query(
-        playersRef,
-        where('status', '==', 'active'),
-        where('teamId', '!=', 'none')
-      );
+      const playersQuery = query(playersRef, where('status', '==', 'active'));
       const playersSnap = await getDocs(playersQuery);
       
       // Calculate stats for each player
-      const playerStatsPromises = playersSnap.docs.map(async (playerDoc) => {
+      const playerStatsPromises = playersSnap.docs
+        .filter(doc => {
+          const data = doc.data();
+          return data['teamId'] && data['teamId'] !== 'none';
+        })
+        .map(async (playerDoc) => {
         const playerData = playerDoc.data();
         const playerId = playerDoc.id;
         
