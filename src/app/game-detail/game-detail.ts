@@ -262,7 +262,9 @@ export class GameDetail implements OnInit {
         ppg: player.ppg,
         shg: player.shg,
         fot: player.fot,
-        fow: player.fow
+        fow: player.fow,
+        minutes: player.minutes,
+        seconds: player.seconds
       };
     });
 
