@@ -319,7 +319,43 @@
         </div>
         <div class="card-body">
           <!-- Search Form -->
-          <div class="input-group mb-3">
+          <div class="position-relative mb-3">
+            <div class="input-group">
+              <input 
+                type="text" 
+                class="form-control" 
+                [(ngModel)]="searchUsername" 
+                (input)="onSearchInput()"
+                placeholder="Enter username or email"
+                [disabled]="loading"
+              >
+              <button 
+                class="btn btn-primary" 
+                (click)="searchUser()"
+                [disabled]="loading"
+              >
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+                Search
+              </button>
+            </div>
+            
+            <!-- Live Search Results -->
+            <div *ngIf="showSearchResults" class="search-results">
+              <div *ngFor="let user of searchResults" 
+                   class="search-result-item"
+                   (click)="selectUserFromSearch(user)">
+                <div class="d-flex align-items-center">
+                  <div class="user-avatar-small me-2">
+                    {{ user.displayName?.charAt(0) || 'U' }}
+                  </div>
+                  <div>
+                    <div class="fw-bold">{{ user.displayName }}</div>
+                    <small class="text-muted">{{ user.email }}</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
             <input 
               type="text" 
               class="form-control" 

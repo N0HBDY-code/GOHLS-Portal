@@ -115,10 +115,15 @@ export class Headquarters implements OnInit {
     'viewer',
     'developer',
     'commissioner',
+    'gm',
     'stats monkey',
     'finance officer',
     'progression tracker'
   ];
+
+  // Live search functionality
+  searchResults: any[] = [];
+  showSearchResults = false;
 
   // Team-specific GM role management
   showGmRoleModal = false;
@@ -753,6 +758,42 @@ export class Headquarters implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  async onSearchInput() {
+    if (this.searchUsername.trim().length < 2) {
+      this.searchResults = [];
+      this.showSearchResults = false;
+      return;
+    }
+
+    try {
+      const usersRef = collection(this.firestore, 'users');
+      const snapshot = await getDocs(usersRef);
+      
+      this.searchResults = snapshot.docs
+        .map(doc => ({
+          uid: doc.id,
+          ...doc.data(),
+          roles: doc.data()['roles'] || []
+        }))
+        .filter(user => 
+          user.displayName?.toLowerCase().includes(this.searchUsername.toLowerCase()) ||
+          user.email?.toLowerCase().includes(this.searchUsername.toLowerCase())
+        )
+        .slice(0, 5); // Limit to 5 results
+      
+      this.showSearchResults = this.searchResults.length > 0;
+    } catch (error) {
+      console.error('Error searching users:', error);
+    }
+  }
+
+  selectUserFromSearch(user: any) {
+    this.selectedUser = user;
+    this.searchUsername = user.displayName;
+    this.showSearchResults = false;
+    this.searchResults = [];
   }
 
   async searchUser() {

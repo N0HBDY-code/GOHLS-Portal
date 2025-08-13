@@ -162,7 +162,7 @@
           
           <div *ngFor="let user of newestUsers" class="user-item d-flex align-items-center mb-3 p-2 border rounded">
             <div class="user-avatar me-3">
-              {{ user.displayName?.charAt(0) || 'U' }}
+              {{ user.displayName.charAt(0) || 'U' }}
             </div>
             <div class="flex-grow-1">
               <h6 class="mb-1">{{ user.displayName }}</h6>
