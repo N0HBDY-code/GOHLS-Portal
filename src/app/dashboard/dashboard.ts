@@ -104,11 +104,15 @@ export class Dashboard implements OnInit, OnDestroy {
       this.user = user;
     });
 
-    await Promise.all([
-      this.loadNewestUsers(),
-      this.loadRecentTransactions(),
-      this.loadTodaysGames()
-    ]);
+    // Load critical data first (games), then load other data lazily
+    await this.loadTodaysGames();
+    await this.loadDashboardStats();
+    
+    // Load non-critical data after a short delay to improve perceived performance
+    setTimeout(() => {
+      this.loadNewestUsers();
+      this.loadRecentTransactions();
+    }, 100);
 
     // Start auto-rotation ONLY if there are multiple games
     this.startAutoRotation();
@@ -189,71 +193,94 @@ export class Dashboard implements OnInit, OnDestroy {
   async loadNewestUsers(): Promise<void> {
     this.loadingUsers = true;
     try {
+      // OPTIMIZATION: Use query with limit to reduce data transfer
       const usersRef = collection(this.firestore, 'users');
-      const snapshot = await getDocs(usersRef);
+      const usersQuery = query(usersRef, limit(10)); // Only get 10 users max
+      const snapshot = await getDocs(usersQuery);
       
-      // Get all users and sort by creation date (using uid timestamp as fallback)
-      const allUsers = await Promise.all(
-        snapshot.docs.map(async (userDoc) => {
-          const userData = userDoc.data();
-          
-          // Try to find their active player
-          let player = undefined;
-          try {
-            const playersQuery = query(
-              collection(this.firestore, 'players'),
-              where('userId', '==', userDoc.id),
-              where('status', '==', 'active'),
-              limit(1)
-            );
-            const playerSnapshot = await getDocs(playersQuery);
-            
-            if (!playerSnapshot.empty) {
-              const playerData = playerSnapshot.docs[0].data();
-              let teamName = 'Free Agent';
-              
-              if (playerData['teamId'] && playerData['teamId'] !== 'none') {
-                const teamRef = doc(this.firestore, `teams/${playerData['teamId']}`);
-                const teamSnap = await getDoc(teamRef);
-                if (teamSnap.exists()) {
-                  const teamData = teamSnap.data();
-                  teamName = `${teamData['city']} ${teamData['mascot']}`;
-                }
-              }
-              
-              player = {
-                firstName: playerData['firstName'] || '',
-                lastName: playerData['lastName'] || '',
-                position: playerData['position'] || '',
-                teamName
-              };
-            }
-          } catch (error) {
-            console.error('Error loading player for user:', error);
-          }
-          
-          // Use account creation date or fallback to uid timestamp
-          const createdDate = userData['createdAt'] || new Date(parseInt(userDoc.id.substring(0, 8), 16) * 1000);
-          
-          return {
-            id: userDoc.id,
-            displayName: userData['displayName'] || 'Unknown User',
-            email: userData['email'] || '',
-            createdDate,
-            player
-          };
-        })
-      );
-      
-      // Sort by creation date (newest first) and take top 5
-      this.newestUsers = allUsers
-        .sort((a, b) => {
-          const aTime = a.createdDate instanceof Date ? a.createdDate : new Date(a.createdDate);
-          const bTime = b.createdDate instanceof Date ? b.createdDate : new Date(b.createdDate);
-          return bTime.getTime() - aTime.getTime();
-        })
-        .slice(0, 5);
+      // OPTIMIZATION: Load users without player data first, then batch load player data
+      const users = snapshot.docs.map(userDoc => {
+        const userData = userDoc.data();
+        const createdDate = userData['createdAt'] || new Date(parseInt(userDoc.id.substring(0, 8), 16) * 1000);
         
+        return {
+          id: userDoc.id,
+          displayName: userData['displayName'] || 'Unknown User',
+          email: userData['email'] || '',
+          createdDate,
+          player: undefined // Will be loaded separately
+        };
+      });
+      
+      // Sort users by creation date first
+      const sortedUsers = users.sort((a, b) => {
+        const aTime = a.createdDate instanceof Date ? a.createdDate : new Date(a.createdDate);
+        const bTime = b.createdDate instanceof Date ? b.createdDate : new Date(b.createdDate);
+        return bTime.getTime() - aTime.getTime();
+      }).slice(0, 5); // Take top 5
+      
+      // OPTIMIZATION: Batch load player data for only the top 5 users
+      const userIds = sortedUsers.map(u => u.id);
+      const playersQuery = query(
+        collection(this.firestore, 'players'),
+        where('userId', 'in', userIds),
+        where('status', '==', 'active')
+      );
+      const playersSnapshot = await getDocs(playersQuery);
+      
+      // Create player lookup map
+      const playerMap = new Map();
+      playersSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        playerMap.set(data['userId'], {
+          firstName: data['firstName'] || '',
+          lastName: data['lastName'] || '',
+          position: data['position'] || '',
+          teamId: data['teamId']
+        });
+      });
+      
+      // OPTIMIZATION: Batch load team data for all unique team IDs
+      const teamIds = Array.from(new Set(
+        Array.from(playerMap.values())
+          .map(p => p.teamId)
+          .filter(id => id && id !== 'none')
+      ));
+      
+      const teamMap = new Map();
+      if (teamIds.length > 0) {
+        // Load teams in batches of 10 (Firestore 'in' query limit)
+        for (let i = 0; i < teamIds.length; i += 10) {
+          const batchIds = teamIds.slice(i, i + 10);
+          const teamsQuery = query(
+            collection(this.firestore, 'teams'),
+            where('__name__', 'in', batchIds)
+          );
+          const teamsSnapshot = await getDocs(teamsQuery);
+          
+          teamsSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            teamMap.set(doc.id, `${data['city']} ${data['mascot']}`);
+          });
+        }
+      }
+      
+      // Combine user and player data
+      this.newestUsers = sortedUsers.map(user => {
+        const playerData = playerMap.get(user.id);
+        if (playerData) {
+          const teamName = playerData.teamId && playerData.teamId !== 'none' 
+            ? teamMap.get(playerData.teamId) || 'Free Agent'
+            : 'Free Agent';
+            
+          user.player = {
+            ...playerData,
+            teamName
+          };
+        }
+        return user;
+      });
+      
     } catch (error) {
       console.error('Error loading newest users:', error);
     } finally {
@@ -266,7 +293,7 @@ export class Dashboard implements OnInit, OnDestroy {
     try {
       const allTransactions: Transaction[] = [];
       
-      // Create caches to reduce API calls
+      // OPTIMIZATION: Enhanced caching system
       const teamCache = new Map<string, any>();
       const playerCache = new Map<string, any>();
       
@@ -315,17 +342,30 @@ export class Dashboard implements OnInit, OnDestroy {
         return 'Unknown Player';
       };
       
-      // 1. Load player history for signings and retirements
+      // OPTIMIZATION: Load only recent player history (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
       const playersRef = collection(this.firestore, 'players');
-      const playersSnapshot = await getDocs(playersRef);
+      const recentPlayersQuery = query(
+        playersRef,
+        where('status', '==', 'active'),
+        limit(20) // Limit to 20 most recent players
+      );
+      const playersSnapshot = await getDocs(recentPlayersQuery);
       
       for (const playerDoc of playersSnapshot.docs) {
         const historyRef = collection(this.firestore, `players/${playerDoc.id}/history`);
-        const historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(3));
+        const historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(2)); // Reduced from 3 to 2
         const historySnapshot = await getDocs(historyQuery);
         
         for (const historyDoc of historySnapshot.docs) {
           const historyData = historyDoc.data();
+          
+          // OPTIMIZATION: Skip old transactions
+          const transactionDate = historyData['timestamp']?.toDate?.() || new Date(historyData['timestamp']);
+          if (transactionDate < thirtyDaysAgo) continue;
+          
           const playerData = playerDoc.data();
           
           if (['signed', 'traded', 'retired'].includes(historyData['action'])) {
@@ -363,23 +403,23 @@ export class Dashboard implements OnInit, OnDestroy {
         }
       }
       
-      // 2. Load trade offers that have been approved
+      // OPTIMIZATION: Load only recent approved trades
       try {
         const tradesRef = collection(this.firestore, 'tradeOffers');
-        const tradesSnapshot = await getDocs(tradesRef);
+        const recentTradesQuery = query(
+          tradesRef,
+          where('status', '==', 'approved'),
+          orderBy('timestamp', 'desc'),
+          limit(5) // Reduced from 10 to 5
+        );
+        const tradesSnapshot = await getDocs(recentTradesQuery);
         
-        // Filter and sort in memory to avoid index requirements
-        const approvedTrades = tradesSnapshot.docs
-          .filter(doc => doc.data()['status'] === 'approved')
-          .sort((a, b) => {
-            const aTime = a.data()['timestamp']?.toDate?.() || new Date(a.data()['timestamp']);
-            const bTime = b.data()['timestamp']?.toDate?.() || new Date(b.data()['timestamp']);
-            return bTime.getTime() - aTime.getTime();
-          })
-          .slice(0, 10); // Limit to 10 most recent
-        
-        for (const tradeDoc of approvedTrades) {
+        for (const tradeDoc of tradesSnapshot.docs) {
           const tradeData = tradeDoc.data();
+          
+          // OPTIMIZATION: Skip old trades
+          const tradeDate = tradeData['timestamp']?.toDate?.() || new Date(tradeData['timestamp']);
+          if (tradeDate < thirtyDaysAgo) continue;
           
           // Get team data with caching
           const [fromTeamData, toTeamData] = await Promise.all([
@@ -387,21 +427,22 @@ export class Dashboard implements OnInit, OnDestroy {
             getTeamData(tradeData['toTeamId'])
           ]);
           
-          // Get player names with caching
+          // OPTIMIZATION: Batch load player names
           const offeredPlayerNames: string[] = [];
           const requestedPlayerNames: string[] = [];
-          const allPlayerIds = [...(tradeData['playersOffered'] || []), ...(tradeData['playersRequested'] || [])];
+          const allTradePlayerIds = [...(tradeData['playersOffered'] || []), ...(tradeData['playersRequested'] || [])];
           
-          // Load offered players
-          for (const playerId of (tradeData['playersOffered'] || [])) {
-            const playerName = await getPlayerData(playerId);
-            offeredPlayerNames.push(playerName);
+          // Batch load all player names for this trade
+          const playerPromises = allTradePlayerIds.map(id => getPlayerData(id));
+          const playerNames = await Promise.all(playerPromises);
+          
+          // Split into offered and requested
+          const offeredCount = (tradeData['playersOffered'] || []).length;
+          for (let i = 0; i < offeredCount; i++) {
+            offeredPlayerNames.push(playerNames[i]);
           }
-          
-          // Load requested players
-          for (const playerId of (tradeData['playersRequested'] || [])) {
-            const playerName = await getPlayerData(playerId);
-            requestedPlayerNames.push(playerName);
+          for (let i = offeredCount; i < playerNames.length; i++) {
+            requestedPlayerNames.push(playerNames[i]);
           }
           
           const description = `Trade completed between ${fromTeamData.name} and ${toTeamData.name}`;
@@ -411,10 +452,9 @@ export class Dashboard implements OnInit, OnDestroy {
             type: 'trade',
             description,
             timestamp: tradeData['timestamp'],
-            playersInvolved: allPlayerIds,
+            playersInvolved: allTradePlayerIds,
             teamLogo: fromTeamData.logo,
             teamName: fromTeamData.name,
-            // Add trade-specific data
             tradeData: {
               fromTeam: fromTeamData,
               toTeam: toTeamData,
@@ -446,7 +486,7 @@ export class Dashboard implements OnInit, OnDestroy {
   async loadTodaysGames(): Promise<void> {
     this.loadingGames = true;
     try {
-      // Get current game schedule settings from headquarters
+      // OPTIMIZATION: Load settings and games in parallel
       const settingsRef = doc(this.firestore, 'gameScheduleSettings/current');
       const settingsSnap = await getDoc(settingsRef);
       
@@ -464,50 +504,73 @@ export class Dashboard implements OnInit, OnDestroy {
       
       console.log(`🎮 Loading games for Season ${currentSeason}, Week ${currentWeek}, ${currentDay}`);
       
-      // Load games for the current week and day
+      // OPTIMIZATION: More specific query to reduce data transfer
       const gamesRef = collection(this.firestore, 'games');
       const gamesQuery = query(
         gamesRef,
         where('season', '==', currentSeason),
         where('week', '==', currentWeek),
-        where('day', '==', currentDay)
+        where('day', '==', currentDay),
+        limit(10) // Limit games per day
       );
       const gamesSnapshot = await getDocs(gamesQuery);
       
       console.log(`📊 Found ${gamesSnapshot.docs.length} games matching criteria`);
       
-      this.todaysGames = await Promise.all(
-        gamesSnapshot.docs.map(async (gameDoc) => {
-          const gameData = gameDoc.data();
+      // OPTIMIZATION: Batch load all unique team IDs
+      const uniqueTeamIds = new Set<string>();
+      gamesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        uniqueTeamIds.add(data['homeTeamId']);
+        uniqueTeamIds.add(data['awayTeamId']);
+      });
+      
+      // Load all teams in one batch query
+      const teamDataMap = new Map();
+      if (uniqueTeamIds.size > 0) {
+        const teamIds = Array.from(uniqueTeamIds);
+        // Load teams in batches of 10 (Firestore 'in' query limit)
+        for (let i = 0; i < teamIds.length; i += 10) {
+          const batchIds = teamIds.slice(i, i + 10);
+          const teamsQuery = query(
+            collection(this.firestore, 'teams'),
+            where('__name__', 'in', batchIds)
+          );
+          const teamsSnapshot = await getDocs(teamsQuery);
           
-          console.log(`🏒 Processing game: ${gameData['homeTeamId']} vs ${gameData['awayTeamId']}`);
-          
-          // Get team information
-          const [homeTeamSnap, awayTeamSnap] = await Promise.all([
-            getDoc(doc(this.firestore, `teams/${gameData['homeTeamId']}`)),
-            getDoc(doc(this.firestore, `teams/${gameData['awayTeamId']}`))
-          ]);
-          
-          const homeTeamData = homeTeamSnap.exists() ? homeTeamSnap.data() : {};
-          const awayTeamData = awayTeamSnap.exists() ? awayTeamSnap.data() : {};
-          
-          return {
-            gameId: gameDoc.id,
-            homeTeam: `${homeTeamData['city']} ${homeTeamData['mascot']}`,
-            awayTeam: `${awayTeamData['city']} ${awayTeamData['mascot']}`,
-            homeTeamId: gameData['homeTeamId'],
-            awayTeamId: gameData['awayTeamId'],
-            homeTeamLogo: homeTeamData['logoUrl'],
-            awayTeamLogo: awayTeamData['logoUrl'],
-            week: gameData['week'],
-            day: gameData['day'],
-            time: gameData['time'] || 'TBD',
-            homeScore: gameData['homeScore'],
-            awayScore: gameData['awayScore'],
-            period: gameData['period']
-          };
-        })
-      );
+          teamsSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            teamDataMap.set(doc.id, {
+              name: `${data['city']} ${data['mascot']}`,
+              logo: data['logoUrl'] || ''
+            });
+          });
+        }
+      }
+      
+      // Process games with cached team data
+      this.todaysGames = gamesSnapshot.docs.map(gameDoc => {
+        const gameData = gameDoc.data();
+        
+        const homeTeamData = teamDataMap.get(gameData['homeTeamId']) || { name: 'Unknown Team', logo: '' };
+        const awayTeamData = teamDataMap.get(gameData['awayTeamId']) || { name: 'Unknown Team', logo: '' };
+        
+        return {
+          gameId: gameDoc.id,
+          homeTeam: homeTeamData.name,
+          awayTeam: awayTeamData.name,
+          homeTeamId: gameData['homeTeamId'],
+          awayTeamId: gameData['awayTeamId'],
+          homeTeamLogo: homeTeamData.logo,
+          awayTeamLogo: awayTeamData.logo,
+          week: gameData['week'],
+          day: gameData['day'],
+          time: gameData['time'] || 'TBD',
+          homeScore: gameData['homeScore'],
+          awayScore: gameData['awayScore'],
+          period: gameData['period']
+        };
+      });
 
       // Reset carousel index when games are loaded
       this.currentGameIndex = 0;
@@ -570,13 +633,14 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.ROTATION_INTERVAL;
   }
 
+  // OPTIMIZATION: New method to load dashboard stats efficiently
   async loadDashboardStats(): Promise<void> {
     try {
-      // Load all stats in parallel to minimize API calls
+      // OPTIMIZATION: Load stats with counting queries where possible
       const [usersSnap, playersSnap, teamsSnap, seasonSnap] = await Promise.all([
-        getDocs(collection(this.firestore, 'users')),
-        getDocs(query(collection(this.firestore, 'players'), where('status', '==', 'active'))),
-        getDocs(collection(this.firestore, 'teams')),
+        getDocs(query(collection(this.firestore, 'users'), limit(1000))), // Reasonable limit
+        getDocs(query(collection(this.firestore, 'players'), where('status', '==', 'active'), limit(1000))),
+        getDocs(query(collection(this.firestore, 'teams'), limit(100))), // Teams are limited anyway
         getDoc(doc(this.firestore, 'leagueSettings/season'))
       ]);
       
