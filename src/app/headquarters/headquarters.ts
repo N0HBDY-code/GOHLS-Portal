@@ -934,28 +934,6 @@ export class Headquarters implements OnInit {
       });
 
       // Update local display
-      this.selectedUserForGm.roles.push(teamSpecificRole);
-      
-      this.success = `GM role assigned successfully for ${this.getTeamNameById(this.selectedTeamForGm)}`;
-      setTimeout(() => this.success = '', 3000);
-      
-      this.showGmRoleModal = false;
-      this.selectedUserForGm = null;
-      this.selectedTeamForGm = '';
-    } catch (error) {
-      console.error('Error assigning GM role:', error);
-      this.error = 'Failed to assign GM role';
-      setTimeout(() => this.error = '', 3000);
-    } finally {
-      this.loading = false;
-    }
-  }
-
-  getTeamNameById(teamId: string): string {
-    const team = this.allTeams.find(t => t.id === teamId);
-    return team ? team.name : 'Unknown Team';
-  }
-
   get majorLeagueTeamsFiltered(): Team[] {
     return this.allTeams.filter(t => (t.league || '') === 'major');
   }
@@ -966,28 +944,6 @@ export class Headquarters implements OnInit {
 
   get allTeamsSorted(): Team[] {
     return [...this.allTeams].sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  async loadAllTeams() {
-    try {
-      const teamsRef = collection(this.firestore, 'teams');
-      const snapshot = await getDocs(teamsRef);
-      
-      this.allTeams = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          name: `${data['city']} ${data['mascot']}`,
-          city: data['city'],
-          mascot: data['mascot'],
-          league: data['league'] || 'major',
-          conference: data['conference'],
-          division: data['division']
-        };
-      });
-    } catch (error) {
-      console.error('Error loading all teams:', error);
-    }
   }
 
   formatRoleDisplay(role: string): string {
