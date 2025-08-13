@@ -9,7 +9,13 @@ export const RoleGuard = (allowedRoles: string[]): CanActivateFn => {
     
     return authService.effectiveRoles.pipe(
       map(roles => {
-        const hasAccess = roles.some(role => allowedRoles.includes(role));
+        const hasAccess = roles.some(role => {
+          // Handle team-specific GM roles
+          if (role.startsWith('gm:')) {
+            return allowedRoles.includes('gm');
+          }
+          return allowedRoles.includes(role);
+        });
         if (hasAccess) {
           return true;
         } else {

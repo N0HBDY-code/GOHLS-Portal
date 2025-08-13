@@ -353,7 +353,7 @@
                 <div class="mt-2">
                   <span *ngFor="let role of selectedUser.roles" 
                         class="badge bg-secondary me-2 mb-2">
-                    {{ formatRoleDisplay(role) }}
+                    {{ role }}
                     <button class="btn btn-sm text-white ms-1" 
                             (click)="removeRole(role)"
                             [disabled]="loading">
@@ -613,6 +613,72 @@
                 (click)="savePlayerEdit()"
                 [disabled]="loading">
           <i class="fas fa-save me-1"></i>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GM Role Assignment Modal -->
+<div class="modal fade show" 
+     *ngIf="showGmRoleModal" 
+     tabindex="-1" 
+     style="display: block; background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fas fa-user-tie me-2"></i>Assign GM Role
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showGmRoleModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="selectedUserForGm">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Team-Specific GM Role:</strong> This will give {{ selectedUserForGm.displayName }} 
+            management permissions for only the selected team.
+          </div>
+          
+          <div class="mb-3">
+            <h6>User: {{ selectedUserForGm.displayName }}</h6>
+            <p class="text-muted mb-0">{{ selectedUserForGm.email }}</p>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">
+              <i class="fas fa-users me-1"></i>Select Team to Manage
+            </label>
+            <select class="form-select" [(ngModel)]="selectedTeamForGm">
+              <option value="">-- Choose a Team --</option>
+              <optgroup label="Major League">
+                <option *ngFor="let team of allTeams.filter(t => t.league === 'major')" [value]="team.id">
+                  {{ team.name }}
+                </option>
+              </optgroup>
+              <optgroup label="Minor League">
+                <option *ngFor="let team of allTeams.filter(t => t.league === 'minor')" [value]="team.id">
+                  {{ team.name }}
+                </option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Note:</strong> GM roles are team-specific. This user will only be able to manage 
+            the selected team's roster, trades, and contracts.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showGmRoleModal = false">Cancel</button>
+        <button type="button" 
+                class="btn btn-primary" 
+                (click)="assignGmRole()"
+                [disabled]="!selectedTeamForGm || loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!loading" class="fas fa-user-tie me-1"></i>Assign GM Role
         </button>
       </div>
     </div>

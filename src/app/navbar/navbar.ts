@@ -19,7 +19,6 @@ export class Navbar implements OnInit, OnDestroy {
   allRoles: string[] = [
     'viewer',
     'commissioner',
-    'gm',
     'stats monkey',
     'finance officer',
     'progression tracker',

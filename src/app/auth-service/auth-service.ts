@@ -40,6 +40,15 @@ export class Auths {
     map(([roles, viewAs]) => viewAs ? [viewAs] : roles)
   );
 
+  availableRoles = [
+    'viewer',
+    'developer',
+    'commissioner',
+    'stats monkey',
+    'finance officer',
+    'progression tracker'
+  ];
+
   get getCurrentUser() {
     return this.auth.currentUser;
   }

@@ -78,9 +78,17 @@ export class TeamDetail implements OnInit {
     try {
       // Check if user can manage team
       this.authService.effectiveRoles.subscribe(roles => {
-        this.canManageTeam = roles.some(role => 
-          ['developer', 'commissioner', 'gm'].includes(role)
-        );
+        this.canManageTeam = roles.some(role => {
+          if (role === 'developer' || role === 'commissioner') {
+            return true;
+          }
+          // Check for team-specific GM role
+          if (role.startsWith('gm:')) {
+            const teamId = role.split(':')[1];
+            return teamId === this.teamId;
+          }
+          return false;
+        });
       });
 
       if (this.teamId) {
