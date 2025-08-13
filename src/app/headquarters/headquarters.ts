@@ -934,6 +934,8 @@ export class Headquarters implements OnInit {
       });
 
       // Update local display
+    }
+  }
   get majorLeagueTeamsFiltered(): Team[] {
     return this.allTeams.filter(t => (t.league || '') === 'major');
   }
