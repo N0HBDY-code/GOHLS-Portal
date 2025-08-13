@@ -66,7 +66,7 @@ export class Analytics implements OnInit {
   // Caching system
   private teamsCache: Team[] | null = null;
   private playerStatsCache: any[] | null = null;
-  private gamesCache: Map<string, any[]> = new Map();
+  private gamesCache: Map<string, Game[]> = new Map();
   private teamStatsCache: Map<string, any> = new Map();
   private lastCacheTime: number = 0;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -495,9 +495,29 @@ export class Analytics implements OnInit {
         getDocs(awayGamesQuery)
       ]);
       
-      const allTeamGames = [
-        ...homeGamesSnap.docs.map(doc => ({ ...doc.data(), isHome: true, gameId: doc.id })),
-        ...awayGamesSnap.docs.map(doc => ({ ...doc.data(), isHome: false, gameId: doc.id }))
+      const allTeamGames: any[] = [
+        ...homeGamesSnap.docs.map(doc => ({ 
+          ...doc.data(), 
+          isHome: true, 
+          gameId: doc.id,
+          homeScore: doc.data()['homeScore'],
+          awayScore: doc.data()['awayScore'],
+          homeStats: doc.data()['homeStats'],
+          awayStats: doc.data()['awayStats'],
+          period: doc.data()['period'],
+          date: doc.data()['date']
+        })),
+        ...awayGamesSnap.docs.map(doc => ({ 
+          ...doc.data(), 
+          isHome: false, 
+          gameId: doc.id,
+          homeScore: doc.data()['homeScore'],
+          awayScore: doc.data()['awayScore'],
+          homeStats: doc.data()['homeStats'],
+          awayStats: doc.data()['awayStats'],
+          period: doc.data()['period'],
+          date: doc.data()['date']
+        }))
       ];
       
       // Sort games by date for streak calculation
@@ -721,17 +741,41 @@ export class Analytics implements OnInit {
     }
 
     try {
-      const gamesQuery = query(
+      // Load games for the selected team
+      const homeGamesQuery = query(
         collection(this.firestore, 'games'),
-        where('teamId', '==', this.selectedExportTeamId),
-        orderBy('date', 'desc')
+        where('homeTeamId', '==', this.selectedExportTeamId)
+      );
+      const awayGamesQuery = query(
+        collection(this.firestore, 'games'),
+        where('awayTeamId', '==', this.selectedExportTeamId)
       );
       
-      const snapshot = await getDocs(gamesQuery);
-      this.exportGames = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Game));
+      const [homeGamesSnap, awayGamesSnap] = await Promise.all([
+        getDocs(homeGamesQuery),
+        getDocs(awayGamesQuery)
+      ]);
+      
+      const allGames = [
+        ...homeGamesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+        ...awayGamesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      ];
+      
+      // Sort by date
+      this.exportGames = allGames
+        .filter(game => game['date']) // Only games with dates
+        .sort((a, b) => {
+          const aDate = a['date']?.toDate?.() || new Date(a['date']);
+          const bDate = b['date']?.toDate?.() || new Date(b['date']);
+          return bDate.getTime() - aDate.getTime();
+        })
+        .map(game => ({
+          id: game.id,
+          teamId: this.selectedExportTeamId,
+          opponent: game['opponent'] || 'Unknown',
+          date: game['date'],
+          players: [] // Will be populated when needed
+        } as Game));
     } catch (error) {
       console.error('Error loading games for export:', error);
     }
