@@ -164,6 +164,44 @@
     flex: 0 0 50%;
     max-width: 50%;
   }
+  
+  .d-flex.justify-content-between,
+  .card-header .d-flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .btn-group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .table-responsive {
+    font-size: 0.85rem;
+  }
+  
+  .card-body .row .col-md-4 {
+    margin-bottom: 1rem;
+  }
+  
+  .game-card {
+    margin-bottom: 1rem;
+  }
+  
+  .team-row {
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .team-name {
+    font-size: 0.85rem;
+    max-width: 120px;
+  }
+  
+  .team-logo {
+    width: 28px;
+    height: 28px;
+  }
 }
 
 @media (max-width: 576px) {
