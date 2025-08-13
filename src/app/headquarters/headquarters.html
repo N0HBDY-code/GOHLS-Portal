@@ -356,22 +356,6 @@
               </div>
             </div>
           </div>
-            <input 
-              type="text" 
-              class="form-control" 
-              [(ngModel)]="searchUsername" 
-              placeholder="Enter username"
-              [disabled]="loading"
-            >
-            <button 
-              class="btn btn-primary" 
-              (click)="searchUser()"
-              [disabled]="loading"
-            >
-              <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
-              Search
-            </button>
-          </div>
 
           <!-- Error/Success Messages -->
           <div *ngIf="error" class="alert alert-danger">{{ error }}</div>

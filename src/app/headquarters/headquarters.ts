@@ -6,6 +6,13 @@ import { Auths } from '../auth-service/auth-service';
 import { getDefaultAttributes } from '../services/progression-default';
 import { Trades, TradeOffer } from '../services/trades';
 interface Team {
+interface UserSearchResult {
+  uid: string;
+  displayName: string;
+  email: string;
+  roles: string[];
+}
+
   id: string;
   name: string;
   city?: string;
@@ -122,7 +129,7 @@ export class Headquarters implements OnInit {
   ];
 
   // Live search functionality
-  searchResults: any[] = [];
+  searchResults: UserSearchResult[] = [];
   showSearchResults = false;
 
   // Team-specific GM role management
@@ -774,9 +781,10 @@ export class Headquarters implements OnInit {
       this.searchResults = snapshot.docs
         .map(doc => ({
           uid: doc.id,
-          ...doc.data(),
+          displayName: doc.data()['displayName'] || '',
+          email: doc.data()['email'] || '',
           roles: doc.data()['roles'] || []
-        }))
+        } as UserSearchResult))
         .filter(user => 
           user.displayName?.toLowerCase().includes(this.searchUsername.toLowerCase()) ||
           user.email?.toLowerCase().includes(this.searchUsername.toLowerCase())
