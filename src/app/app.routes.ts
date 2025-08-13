@@ -99,7 +99,7 @@ export const routes: Routes = [
         path: 'draft',
         loadComponent: () => import('./draft/draft').then(m => m.Draft),
         title: 'Draft Central',
-        canActivate: [AuthGuard, RoleGuard(['developer', 'commissioner', 'gm'])]
+        canActivate: [AuthGuard, RoleGuard(['developer'])]
     },
     // CRITICAL: Add wildcard route for GitHub Pages SPA routing
     {

@@ -177,7 +177,7 @@
 }
 
 .team-display.home-team .team-info {
-  text-align: right;
+  text-align: right !important;
 }
 
 .team-logo {

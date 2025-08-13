@@ -34,7 +34,7 @@
           <li class="nav-item">
             <a class="nav-link px-2 py-2" routerLink="/player">Player</a>
           </li>
-          <li class="nav-item" *ngIf="viewAsRoles.includes('developer') || viewAsRoles.includes('commissioner') || viewAsRoles.includes('gm')">
+          <li class="nav-item" *ngIf="viewAsRoles.includes('developer')">
             <a class="nav-link px-2 py-2" routerLink="/draft">Draft</a>
           </li>
           <li class="nav-item" *ngIf="viewAsRoles.includes('developer') || viewAsRoles.includes('commissioner')">

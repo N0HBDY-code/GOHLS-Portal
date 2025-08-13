@@ -140,44 +140,6 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- Dashboard Content -->
-  <div class="row">
-    <!-- Newest Users -->
-    <div class="col-lg-6 mb-4">
-      <div class="card h-100">
-        <div class="card-header bg-success text-white">
-          <h5 class="mb-0">
-            <i class="fas fa-user-plus me-2"></i>Newest Users
-          </h5>
-        </div>
-        <div class="card-body">
-          <div *ngIf="loadingUsers" class="text-center py-3">
-            <div class="spinner-border spinner-border-sm text-success"></div>
-            <p class="mt-2 mb-0 text-muted">Loading users...</p>
-          </div>
-          
-          <div *ngIf="!loadingUsers && newestUsers.length === 0" class="text-center py-4 text-muted">
-            <i class="fas fa-user-slash fa-2x mb-2"></i>
-            <p class="mb-0">No new users recently</p>
-          </div>
-          
-          <div *ngFor="let user of newestUsers" class="user-item mb-3 p-3 border rounded">
-            <div class="d-flex align-items-center">
-              <div class="user-avatar me-3">
-                {{ user.displayName.charAt(0) }}
-              </div>
-              <div class="flex-grow-1">
-                <h6 class="mb-1">{{ user.displayName }}</h6>
-                <div class="d-flex justify-content-between align-items-center">
-                  <small class="text-muted" *ngIf="user.player">
-                    {{ user.player.firstName }} {{ user.player.lastName }} ({{ user.player.position }})
-                  </small>
-                  <small class="text-muted" *ngIf="!user.player">No player</small>
-                  <span class="badge bg-light text-dark" *ngIf="user.player">{{ user.player.teamName || 'Free Agent' }}</span>
-                </div>
-              </div>
             </div>
             <div class="mt-2">
               <small class="text-muted">Joined {{ getTimeAgo(user.createdDate) }}</small>
@@ -280,8 +242,17 @@
       <div class="card text-center">
         <div class="card-body py-3">
           <i class="fas fa-users fa-2x text-primary mb-2"></i>
+          <h6 class="card-title fs-6">Total Users</h6>
+          <p class="card-text h4">{{ totalUsers }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3 mb-3">
+      <div class="card text-center">
+        <div class="card-body py-3">
+          <i class="fas fa-hockey-puck fa-2x text-success mb-2"></i>
           <h6 class="card-title fs-6">Active Players</h6>
-          <p class="card-text h4">{{ newestUsers.length > 0 ? '500+' : '0' }}</p>
+          <p class="card-text h4">{{ totalActivePlayers }}</p>
         </div>
       </div>
     </div>
@@ -290,16 +261,7 @@
         <div class="card-body py-3">
           <i class="fas fa-trophy fa-2x text-warning mb-2"></i>
           <h6 class="card-title fs-6">Teams</h6>
-          <p class="card-text h4">32</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3 mb-3">
-      <div class="card text-center">
-        <div class="card-body py-3">
-          <i class="fas fa-gamepad fa-2x text-success mb-2"></i>
-          <h6 class="card-title fs-6">Games Played</h6>
-          <p class="card-text h4">{{ todaysGames.length > 0 ? '1000+' : '0' }}</p>
+          <p class="card-text h4">{{ totalTeams }}</p>
         </div>
       </div>
     </div>
@@ -308,7 +270,7 @@
         <div class="card-body py-3">
           <i class="fas fa-calendar fa-2x text-info mb-2"></i>
           <h6 class="card-title fs-6">Current Season</h6>
-          <p class="card-text h4">2025</p>
+          <p class="card-text h4">{{ currentLeagueSeason }}</p>
         </div>
       </div>
     </div>

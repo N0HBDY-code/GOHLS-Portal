@@ -563,4 +563,28 @@ export class Dashboard implements OnInit, OnDestroy {
   get autoRotateInterval(): number {
     return this.ROTATION_INTERVAL;
   }
+
+  async loadDashboardStats(): Promise<void> {
+    try {
+      // Load all stats in parallel to minimize API calls
+      const [usersSnap, playersSnap, teamsSnap, seasonSnap] = await Promise.all([
+        getDocs(collection(this.firestore, 'users')),
+        getDocs(query(collection(this.firestore, 'players'), where('status', '==', 'active'))),
+        getDocs(collection(this.firestore, 'teams')),
+        getDoc(doc(this.firestore, 'leagueSettings/season'))
+      ]);
+      
+      this.totalUsers = usersSnap.docs.length;
+      this.totalActivePlayers = playersSnap.docs.length;
+      this.totalTeams = teamsSnap.docs.length;
+      this.currentLeagueSeason = seasonSnap.exists() ? seasonSnap.data()['currentSeason'] || 1 : 1;
+      
+    } catch (error) {
+      console.error('Error loading dashboard stats:', error);
+      // Set defaults on error
+      this.totalUsers = 0;
+      this.totalActivePlayers = 0;
+      this.totalTeams = 0;
+    }
+  }
 }
