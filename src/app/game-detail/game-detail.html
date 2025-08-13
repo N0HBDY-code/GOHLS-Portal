@@ -235,6 +235,8 @@
                     <th>#</th>
                     <th>Player</th>
                     <th>POS</th>
+                    <th>MIN</th>
+                    <th>SEC</th>
                     <th>G</th>
                     <th>A</th>
                     <th>PTS</th>
@@ -247,8 +249,6 @@
                     <th>SHG</th>
                     <th>FOT</th>
                     <th>FOW</th>
-                    <th>MIN</th>
-                    <th>SEC</th>
                     <th>FO%</th>
                   </tr>
                 </thead>
@@ -257,6 +257,24 @@
                     <td>{{ player.number }}</td>
                     <td>{{ player.name }}</td>
                     <td>{{ player.position }}</td>
+                    <td>
+                      <input *ngIf="isEditing" 
+                             type="number" 
+                             class="form-control form-control-sm stat-input" 
+                             [(ngModel)]="player.minutes"
+                             min="0"
+                             max="60">
+                      <span *ngIf="!isEditing">{{ player.minutes }}</span>
+                    </td>
+                    <td>
+                      <input *ngIf="isEditing" 
+                             type="number" 
+                             class="form-control form-control-sm stat-input" 
+                             [(ngModel)]="player.seconds"
+                             min="0"
+                             max="59">
+                      <span *ngIf="!isEditing">{{ player.seconds }}</span>
+                    </td>
                     <td>
                       <input *ngIf="isEditing" 
                              type="number" 

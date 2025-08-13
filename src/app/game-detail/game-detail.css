@@ -149,6 +149,11 @@
   outline: none;
 }
 
+/* Ensure proper width for minutes and seconds inputs */
+.stat-input {
+  min-width: 50px;
+}
+
 .player-stats .table {
   color: var(--bs-body-color) !important;
   font-size: 0.9rem;
