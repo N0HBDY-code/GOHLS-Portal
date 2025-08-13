@@ -446,22 +446,27 @@ export class Analytics implements OnInit {
   }
 
   async onTeamSelect() {
+    console.log('🔍 onTeamSelect called with selectedTeamId:', this.selectedTeamId);
+    
     // Use cached data if available
     const cacheKey = `team-analytics-${this.selectedTeamId}`;
     if (this.teamStatsCache.has(cacheKey) && this.isCacheValid()) {
       const cachedAnalytics = this.teamStatsCache.get(cacheKey);
       this.teamAnalytics = cachedAnalytics.teamAnalytics;
       this.selectedTeamName = cachedAnalytics.selectedTeamName;
+      console.log('📋 Using cached data for:', this.selectedTeamName);
       return;
     }
 
     if (!this.selectedTeamId) {
+      console.log('❌ No team selected, resetting analytics');
       this.resetAnalytics();
       return;
     }
 
     const team = this.teams.find(t => t.id === this.selectedTeamId);
     this.selectedTeamName = team?.name || '';
+    console.log('🏒 Selected team:', this.selectedTeamName, 'ID:', this.selectedTeamId);
 
     console.log('🔍 Loading analytics for team:', this.selectedTeamName, 'ID:', this.selectedTeamId);
 
@@ -478,6 +483,7 @@ export class Analytics implements OnInit {
       
       // Load team roster after analytics are calculated
       await this.loadTeamRoster();
+      console.log('👥 Team roster loaded:', this.teamRoster.length, 'players');
     } catch (error) {
       console.error('Error loading team analytics:', error);
     }

@@ -526,6 +526,15 @@
           </select>
         </div>
 
+        <!-- Debug Information -->
+        <div class="alert alert-info mb-3" *ngIf="selectedTeamId">
+          <h6>Debug Info:</h6>
+          <p>Selected Team ID: {{ selectedTeamId }}</p>
+          <p>Selected Team Name: {{ selectedTeamName }}</p>
+          <p>Total Games: {{ teamAnalytics.totalGames }}</p>
+          <p>Team Roster Length: {{ teamRoster?.length || 0 }}</p>
+        </div>
+
         <!-- Comprehensive Team Analytics -->
         <div *ngIf="selectedTeamId && selectedTeamName">
           <!-- Team Header -->
