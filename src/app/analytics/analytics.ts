@@ -63,6 +63,14 @@ interface Conference {
 export class Analytics implements OnInit {
   currentView: 'standings' | 'playerstats' | 'analytics' | 'reports' = 'standings';
   
+  // Caching system
+  private teamsCache: Team[] | null = null;
+  private playerStatsCache: any[] | null = null;
+  private gamesCache: Map<string, any[]> = new Map();
+  private teamStatsCache: Map<string, any> = new Map();
+  private lastCacheTime: number = 0;
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
   // Player stats properties
   playerStatsView: 'goals' | 'assists' | 'points' | 'points60' | 'toi' | 'shots' | 'ppg' | 'shg' | 'hits' | 'pim' | 'possession' | 'plusminus' | 'saves' | 'savepct' | 'shutouts' | 'gaa' = 'goals';
   showRookieOnly = false;
@@ -140,80 +148,116 @@ export class Analytics implements OnInit {
       );
     });
 
-    await this.loadTeams();
-    await this.loadPlayerStats();
+    // Load teams first (required for standings)
+    await this.loadTeamsOptimized();
+    
+    // Only load player stats when that tab is accessed
+    if (this.currentView === 'playerstats') {
+      await this.loadPlayerStatsOptimized();
+    }
   }
 
-  async loadTeams() {
+  private isCacheValid(): boolean {
+    return Date.now() - this.lastCacheTime < this.CACHE_DURATION;
+  }
+
+  private updateCacheTime(): void {
+    this.lastCacheTime = Date.now();
+  }
+
+  async loadTeamsOptimized() {
+    // Return cached data if valid
+    if (this.teamsCache && this.isCacheValid()) {
+      this.teams = this.teamsCache;
+      this.filteredTeams = this.teams.filter(team => team.league === this.selectedLeague);
+      return;
+    }
+
     this.loadingStandings = true;
     try {
-      const teamsRef = collection(this.firestore, 'teams');
-      const snapshot = await getDocs(teamsRef);
+      // OPTIMIZATION: Load teams and all games in parallel
+      const [teamsSnap, gamesSnap] = await Promise.all([
+        getDocs(collection(this.firestore, 'teams')),
+        getDocs(collection(this.firestore, 'games'))
+      ]);
       
-      this.teams = await Promise.all(snapshot.docs.map(async (teamDoc) => {
-        const data = teamDoc.data();
+      // Create a map of team stats from all games
+      const teamStatsMap = new Map<string, {
+        wins: number;
+        losses: number;
+        overtimeLosses: number;
+        goalsFor: number;
+        goalsAgainst: number;
+        gamesPlayed: number;
+      }>();
+      
+      // Initialize all teams with zero stats
+      teamsSnap.docs.forEach(doc => {
+        teamStatsMap.set(doc.id, {
+          wins: 0,
+          losses: 0,
+          overtimeLosses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+          gamesPlayed: 0
+        });
+      });
+      
+      // Process all games in a single pass
+      gamesSnap.docs.forEach(gameDoc => {
+        const gameData = gameDoc.data();
+        const homeTeamId = gameData['homeTeamId'];
+        const awayTeamId = gameData['awayTeamId'];
+        const homeScore = gameData['homeScore'];
+        const awayScore = gameData['awayScore'];
+        const period = gameData['period'];
         
-        // Calculate team stats from games
-        const gamesRef = collection(this.firestore, 'games');
-        const homeGamesQuery = query(gamesRef, where('homeTeamId', '==', teamDoc.id));
-        const awayGamesQuery = query(gamesRef, where('awayTeamId', '==', teamDoc.id));
-        
-        const [homeGamesSnap, awayGamesSnap] = await Promise.all([
-          getDocs(homeGamesQuery),
-          getDocs(awayGamesQuery)
-        ]);
-        
-        let wins = 0;
-        let losses = 0;
-        let overtimeLosses = 0;
-        let goalsFor = 0;
-        let goalsAgainst = 0;
-        let gamesPlayed = 0;
-        
-        // Process home games
-        homeGamesSnap.docs.forEach(gameDoc => {
-          const gameData = gameDoc.data();
-          if (gameData['homeScore'] !== undefined && gameData['awayScore'] !== undefined) {
-            gamesPlayed++;
-            const homeScore = gameData['homeScore'] || 0;
-            const awayScore = gameData['awayScore'] || 0;
+        // Only process games with scores
+        if (homeScore !== undefined && awayScore !== undefined) {
+          const homeStats = teamStatsMap.get(homeTeamId);
+          const awayStats = teamStatsMap.get(awayTeamId);
+          
+          if (homeStats && awayStats) {
+            // Update games played
+            homeStats.gamesPlayed++;
+            awayStats.gamesPlayed++;
             
-            goalsFor += homeScore;
-            goalsAgainst += awayScore;
+            // Update goals
+            homeStats.goalsFor += homeScore;
+            homeStats.goalsAgainst += awayScore;
+            awayStats.goalsFor += awayScore;
+            awayStats.goalsAgainst += homeScore;
             
+            // Determine winner and update records
             if (homeScore > awayScore) {
-              wins++;
-            } else if (gameData['period'] === 'OT' || gameData['period'] === 'SO') {
-              overtimeLosses++;
-            } else {
-              losses++;
+              homeStats.wins++;
+              if (period === 'OT' || period === 'SO') {
+                awayStats.overtimeLosses++;
+              } else {
+                awayStats.losses++;
+              }
+            } else if (awayScore > homeScore) {
+              awayStats.wins++;
+              if (period === 'OT' || period === 'SO') {
+                homeStats.overtimeLosses++;
+              } else {
+                homeStats.losses++;
+              }
             }
           }
-        });
+        }
+      });
+      
+      // Build teams array with calculated stats
+      this.teams = teamsSnap.docs.map(teamDoc => {
+        const data = teamDoc.data();
+        const stats = teamStatsMap.get(teamDoc.id) || {
+          wins: 0, losses: 0, overtimeLosses: 0,
+          goalsFor: 0, goalsAgainst: 0, gamesPlayed: 0
+        };
         
-        // Process away games
-        awayGamesSnap.docs.forEach(gameDoc => {
-          const gameData = gameDoc.data();
-          if (gameData['homeScore'] !== undefined && gameData['awayScore'] !== undefined) {
-            gamesPlayed++;
-            const homeScore = gameData['homeScore'] || 0;
-            const awayScore = gameData['awayScore'] || 0;
-            
-            goalsFor += awayScore;
-            goalsAgainst += homeScore;
-            
-            if (awayScore > homeScore) {
-              wins++;
-            } else if (gameData['period'] === 'OT' || gameData['period'] === 'SO') {
-              overtimeLosses++;
-            } else {
-              losses++;
-            }
-          }
-        });
-        
-        const points = (wins * 2) + overtimeLosses;
-        const pointPercentage = gamesPlayed > 0 ? points / (gamesPlayed * 2) : 0;
+        const points = (stats.wins * 2) + stats.overtimeLosses;
+        const pointPercentage = stats.gamesPlayed > 0 ? points / (stats.gamesPlayed * 2) : 0;
         
         return {
           id: teamDoc.id,
@@ -222,18 +266,22 @@ export class Analytics implements OnInit {
           conference: data['conference'] || '',
           division: data['division'] || '',
           logoUrl: data['logoUrl'],
-          wins,
-          losses,
-          overtimeLosses,
+          wins: stats.wins,
+          losses: stats.losses,
+          overtimeLosses: stats.overtimeLosses,
           points,
-          gamesPlayed,
-          goalsFor,
-          goalsAgainst,
-          goalDifferential: goalsFor - goalsAgainst,
+          gamesPlayed: stats.gamesPlayed,
+          goalsFor: stats.goalsFor,
+          goalsAgainst: stats.goalsAgainst,
+          goalDifferential: stats.goalsFor - stats.goalsAgainst,
           pointPercentage,
           playoffStatus: data['playoffStatus']
         };
-      }));
+      });
+      
+      // Cache the results
+      this.teamsCache = this.teams;
+      this.updateCacheTime();
       
       this.filteredTeams = this.teams.filter(team => team.league === this.selectedLeague);
     } catch (error) {
@@ -244,6 +292,10 @@ export class Analytics implements OnInit {
   }
 
   async onLeagueChange() {
+    // Use cached data if available
+    if (this.teamsCache) {
+      this.teams = this.teamsCache;
+    }
     this.filteredTeams = this.teams.filter(team => team.league === this.selectedLeague);
   }
 
@@ -252,11 +304,18 @@ export class Analytics implements OnInit {
   }
 
   async refreshStandings() {
-    await this.loadTeams();
+    // Force refresh by clearing cache
+    this.teamsCache = null;
+    this.lastCacheTime = 0;
+    await this.loadTeamsOptimized();
   }
 
   clearCache() {
-    // Clear any cached data if needed
+    this.teamsCache = null;
+    this.playerStatsCache = null;
+    this.gamesCache.clear();
+    this.teamStatsCache.clear();
+    this.lastCacheTime = 0;
     console.log('Cache cleared');
   }
 
@@ -336,25 +395,66 @@ export class Analytics implements OnInit {
     }
   }
 
+  // Lazy loading method for player stats tab
+  async onPlayerStatsTabClick() {
+    this.currentView = 'playerstats';
+    if (!this.playerStatsCache || !this.isCacheValid()) {
+      await this.loadPlayerStatsOptimized();
+    }
+  }
+
   async onTeamSelect() {
+    // Use cached data if available
+    const cacheKey = `team-${this.selectedTeamId}`;
+    if (this.teamStatsCache.has(cacheKey) && this.isCacheValid()) {
+      const cachedStats = this.teamStatsCache.get(cacheKey);
+      this.totalGames = cachedStats.totalGames;
+      this.totalPoints = cachedStats.totalPoints;
+      this.totalAssists = cachedStats.totalAssists;
+      this.totalRebounds = cachedStats.totalRebounds;
+      this.avgPoints = cachedStats.avgPoints;
+      this.avgAssists = cachedStats.avgAssists;
+      this.avgRebounds = cachedStats.avgRebounds;
+      this.selectedTeamName = cachedStats.selectedTeamName;
+      return;
+    }
+
     if (!this.selectedTeamId) {
       this.resetAnalytics();
       return;
     }
 
-    const team = this.teams.find(t => t.id === this.selectedTeamId);
+    const team = (this.teamsCache || this.teams).find(t => t.id === this.selectedTeamId);
     this.selectedTeamName = team?.name || '';
 
     try {
-      const gamesQuery = query(
-        collection(this.firestore, 'games'),
-        where('teamId', '==', this.selectedTeamId)
-      );
-      
-      const snapshot = await getDocs(gamesQuery);
-      const games = snapshot.docs.map(doc => doc.data() as Game);
+      // Use cached games if available
+      let games: Game[];
+      if (this.gamesCache.has(this.selectedTeamId)) {
+        games = this.gamesCache.get(this.selectedTeamId);
+      } else {
+        const gamesQuery = query(
+          collection(this.firestore, 'games'),
+          where('teamId', '==', this.selectedTeamId)
+        );
+        const snapshot = await getDocs(gamesQuery);
+        games = snapshot.docs.map(doc => doc.data() as Game);
+        this.gamesCache.set(this.selectedTeamId, games);
+      }
       
       this.calculateAnalytics(games);
+      
+      // Cache the calculated analytics
+      this.teamStatsCache.set(cacheKey, {
+        totalGames: this.totalGames,
+        totalPoints: this.totalPoints,
+        totalAssists: this.totalAssists,
+        totalRebounds: this.totalRebounds,
+        avgPoints: this.avgPoints,
+        avgAssists: this.avgAssists,
+        avgRebounds: this.avgRebounds,
+        selectedTeamName: this.selectedTeamName
+      });
     } catch (error) {
       console.error('Error loading team analytics:', error);
     }
@@ -448,10 +548,197 @@ export class Analytics implements OnInit {
     return csvContent;
   }
 
-  async loadPlayerStats() {
+  async loadPlayerStatsOptimized() {
+    // Return cached data if valid
+    if (this.playerStatsCache && this.isCacheValid()) {
+      this.playerStats = this.playerStatsCache;
+      return;
+    }
+
     this.loadingPlayerStats = true;
     try {
-      // Load all active players first, then filter out 'none' teamId in code
+      console.log('🔄 Loading player stats from database...');
+      
+      // OPTIMIZATION: Load all data in parallel
+      const [playersSnap, allTeamsSnap, allGamesSnap] = await Promise.all([
+        getDocs(query(collection(this.firestore, 'players'), where('status', '==', 'active'))),
+        getDocs(collection(this.firestore, 'teams')),
+        getDocs(collection(this.firestore, 'games'))
+      ]);
+      
+      // Build team lookup map
+      const teamLookup = new Map();
+      allTeamsSnap.docs.forEach(doc => {
+        const data = doc.data();
+        teamLookup.set(doc.id, {
+          name: `${data['city']} ${data['mascot']}`,
+          logo: data['logoUrl'] || ''
+        });
+      });
+      
+      // Build comprehensive game stats map for all players
+      const playerGameStatsMap = new Map<string, any>();
+      
+      allGamesSnap.docs.forEach(gameDoc => {
+        const gameData = gameDoc.data();
+        const homePlayerStats = gameData['homePlayerStats'] || {};
+        const awayPlayerStats = gameData['awayPlayerStats'] || {};
+        
+        // Process home team player stats
+        Object.entries(homePlayerStats).forEach(([playerId, stats]: [string, any]) => {
+          if (!playerGameStatsMap.has(playerId)) {
+            playerGameStatsMap.set(playerId, {
+              games: 0, goals: 0, assists: 0, shots: 0, hits: 0, pim: 0,
+              ppg: 0, shg: 0, plusMinus: 0, totalMinutes: 0, totalSeconds: 0,
+              saves: 0, shotsAgainst: 0, shutouts: 0, goalsAgainst: 0, possessionTime: 0
+            });
+          }
+          
+          const playerTotals = playerGameStatsMap.get(playerId);
+          playerTotals.games++;
+          playerTotals.goals += stats.goals || 0;
+          playerTotals.assists += stats.assists || 0;
+          playerTotals.shots += stats.shots || 0;
+          playerTotals.hits += stats.hits || 0;
+          playerTotals.pim += stats.pim || 0;
+          playerTotals.ppg += stats.ppg || 0;
+          playerTotals.shg += stats.shg || 0;
+          playerTotals.plusMinus += stats.plusMinus || 0;
+          playerTotals.totalMinutes += stats.minutes || 0;
+          playerTotals.totalSeconds += stats.seconds || 0;
+          playerTotals.saves += stats.saves || 0;
+          playerTotals.shotsAgainst += stats.shotsAgainst || 0;
+          playerTotals.goalsAgainst += stats.goalsAgainst || 0;
+          playerTotals.possessionTime += stats.possessionTime || 0;
+          
+          // Check for shutouts (goalies only)
+          if (stats.position === 'G' && (stats.goalsAgainst || 0) === 0) {
+            playerTotals.shutouts++;
+          }
+        });
+        
+        // Process away team player stats
+        Object.entries(awayPlayerStats).forEach(([playerId, stats]: [string, any]) => {
+          if (!playerGameStatsMap.has(playerId)) {
+            playerGameStatsMap.set(playerId, {
+              games: 0, goals: 0, assists: 0, shots: 0, hits: 0, pim: 0,
+              ppg: 0, shg: 0, plusMinus: 0, totalMinutes: 0, totalSeconds: 0,
+              saves: 0, shotsAgainst: 0, shutouts: 0, goalsAgainst: 0, possessionTime: 0
+            });
+          }
+          
+          const playerTotals = playerGameStatsMap.get(playerId);
+          playerTotals.games++;
+          playerTotals.goals += stats.goals || 0;
+          playerTotals.assists += stats.assists || 0;
+          playerTotals.shots += stats.shots || 0;
+          playerTotals.hits += stats.hits || 0;
+          playerTotals.pim += stats.pim || 0;
+          playerTotals.ppg += stats.ppg || 0;
+          playerTotals.shg += stats.shg || 0;
+          playerTotals.plusMinus += stats.plusMinus || 0;
+          playerTotals.totalMinutes += stats.minutes || 0;
+          playerTotals.totalSeconds += stats.seconds || 0;
+          playerTotals.saves += stats.saves || 0;
+          playerTotals.shotsAgainst += stats.shotsAgainst || 0;
+          playerTotals.goalsAgainst += stats.goalsAgainst || 0;
+          playerTotals.possessionTime += stats.possessionTime || 0;
+          
+          // Check for shutouts (goalies only)
+          if (stats.position === 'G' && (stats.goalsAgainst || 0) === 0) {
+            playerTotals.shutouts++;
+          }
+        });
+      });
+      
+      // Build teams array with pre-calculated stats
+      this.teams = teamsSnap.docs.map(teamDoc => {
+        const data = teamDoc.data();
+        const stats = teamStatsMap.get(teamDoc.id) || {
+          wins: 0, losses: 0, overtimeLosses: 0,
+          goalsFor: 0, goalsAgainst: 0, gamesPlayed: 0
+        };
+        
+        const points = (stats.wins * 2) + stats.overtimeLosses;
+        const pointPercentage = stats.gamesPlayed > 0 ? points / (stats.gamesPlayed * 2) : 0;
+        
+        return {
+          id: teamDoc.id,
+          name: `${data['city']} ${data['mascot']}`,
+          league: data['league'] || 'major',
+          conference: data['conference'] || '',
+          division: data['division'] || '',
+          logoUrl: data['logoUrl'],
+          wins: stats.wins,
+          losses: stats.losses,
+          overtimeLosses: stats.overtimeLosses,
+          points,
+          gamesPlayed: stats.gamesPlayed,
+          goalsFor: stats.goalsFor,
+          goalsAgainst: stats.goalsAgainst,
+          goalDifferential: stats.goalsFor - stats.goalsAgainst,
+          pointPercentage,
+          playoffStatus: data['playoffStatus']
+        };
+      });
+      
+      // Cache teams data
+      this.teamsCache = this.teams;
+      this.updateCacheTime();
+      
+      // Build player stats from the aggregated data
+      this.playerStats = playersSnap.docs
+        .filter(doc => {
+          const data = doc.data();
+          return data['teamId'] && data['teamId'] !== 'none';
+        })
+        .map(playerDoc => {
+          const playerData = playerDoc.data();
+          const playerId = playerDoc.id;
+          const gameStats = playerGameStatsMap.get(playerId) || {
+            games: 0, goals: 0, assists: 0, shots: 0, hits: 0, pim: 0,
+            ppg: 0, shg: 0, plusMinus: 0, totalMinutes: 0, totalSeconds: 0,
+            saves: 0, shotsAgainst: 0, shutouts: 0, goalsAgainst: 0, possessionTime: 0
+          };
+          
+          // Get team info
+          const teamInfo = teamLookup.get(playerData['teamId']) || { name: 'Free Agent', logo: '' };
+          
+          // Calculate derived stats
+          const points = gameStats.goals + gameStats.assists;
+          const totalTimeInMinutes = gameStats.totalMinutes + (gameStats.totalSeconds / 60);
+          const points60 = totalTimeInMinutes > 0 ? (points / totalTimeInMinutes) * 60 : 0;
+          const savePercentage = gameStats.shotsAgainst > 0 ? (gameStats.saves / gameStats.shotsAgainst) * 100 : 0;
+          const gaa = gameStats.games > 0 ? gameStats.goalsAgainst / gameStats.games : 0;
+          
+          return {
+            id: playerId,
+            name: `${playerData['firstName']} ${playerData['lastName']}`,
+            position: playerData['position'],
+            teamName: teamInfo.name,
+            teamLogo: teamInfo.logo,
+            rookie: playerData['rookie'] || false,
+            age: playerData['age'] || 19,
+            games: gameStats.games,
+            goals: gameStats.goals,
+            assists: gameStats.assists,
+            points,
+            shots: gameStats.shots,
+            hits: gameStats.hits,
+            pim: gameStats.pim,
+            ppg: gameStats.ppg,
+            shg: gameStats.shg,
+            plusMinus: gameStats.plusMinus,
+            saves: gameStats.saves,
+            shotsAgainst: gameStats.shotsAgainst,
+            shutouts: gameStats.shutouts,
+            points60,
+            savePercentage,
+            gaa,
+            timeOnIce: totalTimeInMinutes,
+            possessionTime: gameStats.possessionTime
+          };
+        });
       const playersRef = collection(this.firestore, 'players');
       const playersQuery = query(playersRef, where('status', '==', 'active'));
       const playersSnap = await getDocs(playersQuery);
@@ -463,105 +750,11 @@ export class Analytics implements OnInit {
           return data['teamId'] && data['teamId'] !== 'none';
         })
         .map(async (playerDoc) => {
-        const playerData = playerDoc.data();
-        const playerId = playerDoc.id;
-        
-        // Get team info
-        let teamName = 'Free Agent';
-        let teamLogo = '';
-        if (playerData['teamId'] && playerData['teamId'] !== 'none') {
-          const team = this.teams.find(t => t.id === playerData['teamId']);
-          if (team) {
-            teamName = team.name;
-            teamLogo = team.logoUrl || '';
-          }
-        }
-        
-        // Initialize stats
-        let totalStats = {
-          games: 0,
-          goals: 0,
-          assists: 0,
-          points: 0,
-          shots: 0,
-          hits: 0,
-          pim: 0,
-          ppg: 0,
-          shg: 0,
-          plusMinus: 0,
-          totalMinutes: 0,
-          totalSeconds: 0,
-          saves: 0,
-          shotsAgainst: 0,
-          shutouts: 0,
-          goalsAgainst: 0,
-          possessionTime: 0
-        };
-        
-        // Load game stats from all teams (in case player was traded)
-        const allTeamsSnap = await getDocs(collection(this.firestore, 'teams'));
-        
-        for (const teamDoc of allTeamsSnap.docs) {
-          const gamesRef = collection(this.firestore, `teams/${teamDoc.id}/games`);
-          const gamesSnap = await getDocs(gamesRef);
-          
-          for (const gameDoc of gamesSnap.docs) {
-            const gameData = gameDoc.data();
-            
-            // Check if player has stats in this game
-            const homePlayerStats = gameData['homePlayerStats']?.[playerId];
-            const awayPlayerStats = gameData['awayPlayerStats']?.[playerId];
-            const playerGameStats = homePlayerStats || awayPlayerStats;
-            
-            if (playerGameStats) {
-              totalStats.games++;
-              totalStats.goals += playerGameStats.goals || 0;
-              totalStats.assists += playerGameStats.assists || 0;
-              totalStats.shots += playerGameStats.shots || 0;
-              totalStats.hits += playerGameStats.hits || 0;
-              totalStats.pim += playerGameStats.pim || 0;
-              totalStats.ppg += playerGameStats.ppg || 0;
-              totalStats.shg += playerGameStats.shg || 0;
-              totalStats.plusMinus += playerGameStats.plusMinus || 0;
-              totalStats.totalMinutes += playerGameStats.minutes || 0;
-              totalStats.totalSeconds += playerGameStats.seconds || 0;
-              totalStats.saves += playerGameStats.saves || 0;
-              totalStats.shotsAgainst += playerGameStats.shotsAgainst || 0;
-              totalStats.goalsAgainst += playerGameStats.goalsAgainst || 0;
-              totalStats.possessionTime += playerGameStats.possessionTime || 0;
-              
-              // Check for shutouts (goalies only)
-              if (playerData['position'] === 'G' && (playerGameStats.goalsAgainst || 0) === 0) {
-                totalStats.shutouts++;
-              }
-            }
-          }
-        }
-        
-        // Calculate derived stats
-        totalStats.points = totalStats.goals + totalStats.assists;
-        const totalTimeInMinutes = totalStats.totalMinutes + (totalStats.totalSeconds / 60);
-        const points60 = totalTimeInMinutes > 0 ? (totalStats.points / totalTimeInMinutes) * 60 : 0;
-        const savePercentage = totalStats.shotsAgainst > 0 ? (totalStats.saves / totalStats.shotsAgainst) * 100 : 0;
-        const gaa = totalStats.games > 0 ? totalStats.goalsAgainst / totalStats.games : 0;
-        
-        return {
-          id: playerId,
-          name: `${playerData['firstName']} ${playerData['lastName']}`,
-          position: playerData['position'],
-          teamName,
-          teamLogo,
-          rookie: playerData['rookie'] || false,
-          age: playerData['age'] || 19,
-          ...totalStats,
-          points60,
-          savePercentage,
-          gaa,
-          timeOnIce: totalTimeInMinutes
-        };
-      });
+      // Cache player stats
+      this.playerStatsCache = this.playerStats;
+      this.updateCacheTime();
       
-      this.playerStats = await Promise.all(playerStatsPromises);
+      console.log(`✅ Loaded stats for ${this.playerStats.length} players`);
     } catch (error) {
       console.error('Error loading player stats:', error);
     } finally {
