@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Auths } from '../auth-service/auth-service';
 import { getDefaultAttributes } from '../services/progression-default';
 import { Trades, TradeOffer } from '../services/trades';
-interface Team {
+
 interface UserSearchResult {
   uid: string;
   displayName: string;
@@ -13,8 +13,14 @@ interface UserSearchResult {
   roles: string[];
 }
 
+interface Team {
   id: string;
   name: string;
+  city?: string;
+  mascot?: string;
+  league?: string;
+  conference?: string;
+  division?: string;
   city?: string;
   mascot?: string;
   league?: string;
