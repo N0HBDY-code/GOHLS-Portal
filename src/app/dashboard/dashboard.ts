@@ -87,6 +87,12 @@ export class Dashboard implements OnInit, OnDestroy {
   private autoRotateTimer?: any;
   private readonly ROTATION_INTERVAL = 3000; // 3 seconds - EXACTLY 3 seconds per game
 
+  // Dashboard stats properties
+  totalUsers = 0;
+  totalActivePlayers = 0;
+  totalTeams = 0;
+  currentLeagueSeason = 1;
+
   constructor(
     private authService: Auths, 
     private firestore: Firestore,
