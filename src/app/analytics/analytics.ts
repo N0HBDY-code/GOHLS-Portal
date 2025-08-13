@@ -176,7 +176,7 @@ export class Analytics implements OnInit {
     this.loadingStandings = true;
     try {
       // OPTIMIZATION: Load teams and all games in parallel
-      const [teamsSnap, gamesSnap] = await Promise.all([
+      const [teamsSnapshot, gamesSnapshot] = await Promise.all([
         getDocs(collection(this.firestore, 'teams')),
         getDocs(collection(this.firestore, 'games'))
       ]);
@@ -192,7 +192,7 @@ export class Analytics implements OnInit {
       }>();
       
       // Initialize all teams with zero stats
-      teamsSnap.docs.forEach(doc => {
+      teamsSnapshot.docs.forEach(doc => {
         teamStatsMap.set(doc.id, {
           wins: 0,
           losses: 0,
@@ -204,7 +204,7 @@ export class Analytics implements OnInit {
       });
       
       // Process all games in a single pass
-      gamesSnap.docs.forEach(gameDoc => {
+      gamesSnapshot.docs.forEach(gameDoc => {
         const gameData = gameDoc.data();
         const homeTeamId = gameData['homeTeamId'];
         const awayTeamId = gameData['awayTeamId'];
@@ -249,7 +249,7 @@ export class Analytics implements OnInit {
       });
       
       // Build teams array with calculated stats
-      this.teams = teamsSnap.docs.map(teamDoc => {
+      this.teams = teamsSnapshot.docs.map((teamDoc: any) => {
         const data = teamDoc.data();
         const stats = teamStatsMap.get(teamDoc.id) || {
           wins: 0, losses: 0, overtimeLosses: 0,
@@ -431,7 +431,7 @@ export class Analytics implements OnInit {
       // Use cached games if available
       let games: Game[];
       if (this.gamesCache.has(this.selectedTeamId)) {
-        games = this.gamesCache.get(this.selectedTeamId);
+        games = this.gamesCache.get(this.selectedTeamId) || [];
       } else {
         const gamesQuery = query(
           collection(this.firestore, 'games'),
@@ -560,7 +560,7 @@ export class Analytics implements OnInit {
       console.log('🔄 Loading player stats from database...');
       
       // OPTIMIZATION: Load all data in parallel
-      const [playersSnap, allTeamsSnap, allGamesSnap] = await Promise.all([
+      const [playersSnapshot, allTeamsSnapshot, allGamesSnapshot] = await Promise.all([
         getDocs(query(collection(this.firestore, 'players'), where('status', '==', 'active'))),
         getDocs(collection(this.firestore, 'teams')),
         getDocs(collection(this.firestore, 'games'))
@@ -568,7 +568,7 @@ export class Analytics implements OnInit {
       
       // Build team lookup map
       const teamLookup = new Map();
-      allTeamsSnap.docs.forEach(doc => {
+      allTeamsSnapshot.docs.forEach(doc => {
         const data = doc.data();
         teamLookup.set(doc.id, {
           name: `${data['city']} ${data['mascot']}`,
@@ -579,7 +579,7 @@ export class Analytics implements OnInit {
       // Build comprehensive game stats map for all players
       const playerGameStatsMap = new Map<string, any>();
       
-      allGamesSnap.docs.forEach(gameDoc => {
+      allGamesSnapshot.docs.forEach(gameDoc => {
         const gameData = gameDoc.data();
         const homePlayerStats = gameData['homePlayerStats'] || {};
         const awayPlayerStats = gameData['awayPlayerStats'] || {};
@@ -687,7 +687,7 @@ export class Analytics implements OnInit {
       this.updateCacheTime();
       
       // Build player stats from the aggregated data
-      this.playerStats = playersSnap.docs
+      this.playerStats = playersSnapshot.docs
         .filter(doc => {
           const data = doc.data();
           return data['teamId'] && data['teamId'] !== 'none';
@@ -762,20 +762,6 @@ export class Analytics implements OnInit {
     } finally {
       this.loadingPlayerStats = false;
     }
-  }
-
-  getFilteredPlayerStats(): any[] {
-    let filtered = this.showRookieOnly 
-      ? this.playerStats.filter(p => p.rookie) 
-      : this.playerStats;
-    
-    // Sort by selected category
-    switch (this.playerStatsView) {
-      case 'goals':
-        filtered = filtered.sort((a, b) => b.goals - a.goals);
-        break;
-      case 'assists':
-        filtered = filtered.sort((a, b) => b.assists - a.assists);
         break;
       case 'points':
         filtered = filtered.sort((a, b) => b.points - a.points);
