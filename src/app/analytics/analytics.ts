@@ -475,6 +475,9 @@ export class Analytics implements OnInit {
       });
       
       console.log('✅ Team analytics calculated:', this.teamAnalytics);
+      
+      // Load team roster after analytics are calculated
+      await this.loadTeamRoster();
     } catch (error) {
       console.error('Error loading team analytics:', error);
     }
@@ -1107,6 +1110,167 @@ export class Analytics implements OnInit {
       case 'LW': return '#17a2b8'; // Teal
       case 'RW': return '#007bff'; // Blue
       default: return '#6c757d'; // Gray
+    }
+  }
+
+  hasGoalies(): boolean {
+    return this.teamRoster.some(player => player.position === 'G');
+  }
+
+  formatTimeOnIce(minutes: number): string {
+    const mins = Math.floor(minutes);
+    const secs = Math.round((minutes - mins) * 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  async loadTeamRoster() {
+    if (!this.selectedTeamId) {
+      this.teamRoster = [];
+      return;
+    }
+
+    try {
+      console.log('👥 Loading team roster for:', this.selectedTeamName);
+      
+      // Load team roster
+      const rosterRef = collection(this.firestore, `teams/${this.selectedTeamId}/roster`);
+      const rosterSnapshot = await getDocs(rosterRef);
+      
+      // Load all games to calculate player stats
+      const allGamesQuery = query(
+        collection(this.firestore, 'games'),
+        where('homeTeamId', '==', this.selectedTeamId)
+      );
+      const awayGamesQuery = query(
+        collection(this.firestore, 'games'),
+        where('awayTeamId', '==', this.selectedTeamId)
+      );
+      
+      const [homeGamesSnap, awayGamesSnap] = await Promise.all([
+        getDocs(allGamesQuery),
+        getDocs(awayGamesQuery)
+      ]);
+      
+      // Build player stats map from all games
+      const playerStatsMap = new Map<string, any>();
+      
+      // Initialize all roster players with zero stats
+      rosterSnapshot.docs.forEach(doc => {
+        playerStatsMap.set(doc.id, {
+          games: 0, goals: 0, assists: 0, shots: 0, hits: 0, pim: 0,
+          ppg: 0, shg: 0, plusMinus: 0, totalMinutes: 0, totalSeconds: 0,
+          saves: 0, shotsAgainst: 0, shutouts: 0, goalsAgainst: 0
+        });
+      });
+      
+      // Process home games
+      homeGamesSnap.docs.forEach(gameDoc => {
+        const gameData = gameDoc.data();
+        const homePlayerStats = gameData['homePlayerStats'] || {};
+        
+        Object.entries(homePlayerStats).forEach(([playerId, stats]: [string, any]) => {
+          if (playerStatsMap.has(playerId)) {
+            const playerTotals = playerStatsMap.get(playerId);
+            playerTotals.games++;
+            playerTotals.goals += stats.goals || 0;
+            playerTotals.assists += stats.assists || 0;
+            playerTotals.shots += stats.shots || 0;
+            playerTotals.hits += stats.hits || 0;
+            playerTotals.pim += stats.pim || 0;
+            playerTotals.ppg += stats.ppg || 0;
+            playerTotals.shg += stats.shg || 0;
+            playerTotals.plusMinus += stats.plusMinus || 0;
+            playerTotals.totalMinutes += stats.minutes || 0;
+            playerTotals.totalSeconds += stats.seconds || 0;
+            playerTotals.saves += stats.saves || 0;
+            playerTotals.shotsAgainst += stats.shotsAgainst || 0;
+            playerTotals.goalsAgainst += stats.goalsAgainst || 0;
+            
+            // Check for shutouts (goalies only)
+            if (stats.position === 'G' && (stats.goalsAgainst || 0) === 0) {
+              playerTotals.shutouts++;
+            }
+          }
+        });
+      });
+      
+      // Process away games
+      awayGamesSnap.docs.forEach(gameDoc => {
+        const gameData = gameDoc.data();
+        const awayPlayerStats = gameData['awayPlayerStats'] || {};
+        
+        Object.entries(awayPlayerStats).forEach(([playerId, stats]: [string, any]) => {
+          if (playerStatsMap.has(playerId)) {
+            const playerTotals = playerStatsMap.get(playerId);
+            playerTotals.games++;
+            playerTotals.goals += stats.goals || 0;
+            playerTotals.assists += stats.assists || 0;
+            playerTotals.shots += stats.shots || 0;
+            playerTotals.hits += stats.hits || 0;
+            playerTotals.pim += stats.pim || 0;
+            playerTotals.ppg += stats.ppg || 0;
+            playerTotals.shg += stats.shg || 0;
+            playerTotals.plusMinus += stats.plusMinus || 0;
+            playerTotals.totalMinutes += stats.minutes || 0;
+            playerTotals.totalSeconds += stats.seconds || 0;
+            playerTotals.saves += stats.saves || 0;
+            playerTotals.shotsAgainst += stats.shotsAgainst || 0;
+            playerTotals.goalsAgainst += stats.goalsAgainst || 0;
+            
+            // Check for shutouts (goalies only)
+            if (stats.position === 'G' && (stats.goalsAgainst || 0) === 0) {
+              playerTotals.shutouts++;
+            }
+          }
+        });
+      });
+      
+      // Build final roster with calculated stats
+      this.teamRoster = rosterSnapshot.docs.map(doc => {
+        const rosterData = doc.data();
+        const gameStats = playerStatsMap.get(doc.id) || {
+          games: 0, goals: 0, assists: 0, shots: 0, hits: 0, pim: 0,
+          ppg: 0, shg: 0, plusMinus: 0, totalMinutes: 0, totalSeconds: 0,
+          saves: 0, shotsAgainst: 0, shutouts: 0, goalsAgainst: 0
+        };
+        
+        // Calculate derived stats
+        const points = gameStats.goals + gameStats.assists;
+        const totalTimeInMinutes = gameStats.totalMinutes + (gameStats.totalSeconds / 60);
+        const shootingPercentage = gameStats.shots > 0 ? (gameStats.goals / gameStats.shots) * 100 : 0;
+        const savePercentage = gameStats.shotsAgainst > 0 ? (gameStats.saves / gameStats.shotsAgainst) * 100 : 0;
+        const gaa = gameStats.games > 0 ? gameStats.goalsAgainst / gameStats.games : 0;
+        
+        return {
+          id: doc.id,
+          number: rosterData['jerseyNumber'] || 0,
+          name: `${rosterData['firstName']} ${rosterData['lastName']}`,
+          position: rosterData['position'] || '',
+          rookie: rosterData['rookie'] || false,
+          games: gameStats.games,
+          goals: gameStats.goals,
+          assists: gameStats.assists,
+          points,
+          plusMinus: gameStats.plusMinus,
+          pim: gameStats.pim,
+          shots: gameStats.shots,
+          shootingPercentage,
+          hits: gameStats.hits,
+          ppg: gameStats.ppg,
+          shg: gameStats.shg,
+          timeOnIce: totalTimeInMinutes,
+          saves: gameStats.saves,
+          shotsAgainst: gameStats.shotsAgainst,
+          savePercentage,
+          gaa,
+          shutouts: gameStats.shutouts
+        };
+      }).sort((a, b) => a.number - b.number);
+      
+      console.log(`👥 Loaded ${this.teamRoster.length} players for team roster`);
+    } catch (error) {
+      console.error('Error loading team roster:', error);
+      this.teamRoster = [];
     }
   }
 }
