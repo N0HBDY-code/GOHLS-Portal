@@ -208,6 +208,9 @@ body {
 
 .alert {
   transition: all 0.2s ease;
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
 }
 
 .dropdown-menu {
@@ -271,6 +274,205 @@ body {
 .list-group-item.active {
   background-color: var(--bs-primary) !important;
   border-color: var(--bs-primary) !important;
+}
+
+/* Fix all containers and cards to use theme variables */
+.container,
+.container-fluid {
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+/* Dashboard specific fixes */
+.games-carousel-container {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+.game-card-single {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+.team-display {
+  background-color: var(--bs-secondary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+.user-item {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+.user-item:hover {
+  background-color: var(--bs-secondary-bg) !important;
+}
+
+.transaction-item {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+.trade-transaction {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.trade-side {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Fix all other containers throughout the app */
+.stat-card,
+.training-section,
+.attributes-section-full,
+.player-header,
+.team-header,
+.scoreboard,
+.game-stats {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+/* Fix team cards */
+.team-card {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+.team-info {
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.no-logo-placeholder {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+/* Fix game cards */
+.game-card {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+  transition: all 0.2s ease;
+}
+
+.team-row {
+  background-color: var(--bs-tertiary-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.score-number {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Fix input fields in dark mode */
+.theme-dark .form-control::placeholder,
+.theme-dark .form-select option {
+  color: var(--bs-secondary-color) !important;
+}
+
+/* Fix badges in dark mode */
+.theme-dark .badge.bg-secondary {
+  background-color: var(--bs-secondary) !important;
+  color: var(--bs-body-bg) !important;
+}
+
+/* Fix borders and backgrounds for all components */
+.border,
+.border-top,
+.border-bottom,
+.border-start,
+.border-end {
+  border-color: var(--bs-border-color) !important;
+}
+
+.bg-light {
+  background-color: var(--bs-light) !important;
+  color: var(--bs-dark) !important;
+}
+
+.bg-dark {
+  background-color: var(--bs-dark) !important;
+  color: var(--bs-light) !important;
+}
+
+/* Fix text colors */
+.text-dark {
+  color: var(--bs-dark) !important;
+}
+
+.text-light {
+  color: var(--bs-light) !important;
+}
+
+/* Ensure proper contrast for all text elements */
+h1, h2, h3, h4, h5, h6,
+p, span, div, label {
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+/* Fix specific dashboard elements */
+.week-badge,
+.day-badge {
+  background-color: var(--bs-secondary) !important;
+  color: var(--bs-body-bg) !important;
+}
+
+.status-badge {
+  transition: all 0.2s ease;
+}
+
+.vs-text {
+  color: var(--bs-secondary-color) !important;
+}
+
+.team-name {
+  color: var(--bs-body-color) !important;
+}
+
+.team-record {
+  color: var(--bs-secondary-color) !important;
+}
+
+/* Fix player avatar */
+.user-avatar {
+  background-color: var(--bs-success) !important;
+  color: white !important;
+}
+
+/* Fix any remaining white backgrounds */
+.bg-white {
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Ensure all custom components respect theme */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 /* Ensure proper viewport handling */
