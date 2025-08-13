@@ -121,6 +121,7 @@ export class Analytics implements OnInit {
   // Analytics properties
   selectedTeamId = '';
   selectedTeamName = '';
+  teamRoster: any[] = [];
   
   // Comprehensive team analytics
   teamAnalytics = {
