@@ -651,41 +651,6 @@ export class Analytics implements OnInit {
         });
       });
       
-      // Build teams array with pre-calculated stats
-      this.teams = teamsSnap.docs.map(teamDoc => {
-        const data = teamDoc.data();
-        const stats = teamStatsMap.get(teamDoc.id) || {
-          wins: 0, losses: 0, overtimeLosses: 0,
-          goalsFor: 0, goalsAgainst: 0, gamesPlayed: 0
-        };
-        
-        const points = (stats.wins * 2) + stats.overtimeLosses;
-        const pointPercentage = stats.gamesPlayed > 0 ? points / (stats.gamesPlayed * 2) : 0;
-        
-        return {
-          id: teamDoc.id,
-          name: `${data['city']} ${data['mascot']}`,
-          league: data['league'] || 'major',
-          conference: data['conference'] || '',
-          division: data['division'] || '',
-          logoUrl: data['logoUrl'],
-          wins: stats.wins,
-          losses: stats.losses,
-          overtimeLosses: stats.overtimeLosses,
-          points,
-          gamesPlayed: stats.gamesPlayed,
-          goalsFor: stats.goalsFor,
-          goalsAgainst: stats.goalsAgainst,
-          goalDifferential: stats.goalsFor - stats.goalsAgainst,
-          pointPercentage,
-          playoffStatus: data['playoffStatus']
-        };
-      });
-      
-      // Cache teams data
-      this.teamsCache = this.teams;
-      this.updateCacheTime();
-      
       // Build player stats from the aggregated data
       this.playerStats = playersSnapshot.docs
         .filter(doc => {
@@ -739,19 +704,7 @@ export class Analytics implements OnInit {
             possessionTime: gameStats.possessionTime
           };
         });
-      const playersRef = collection(this.firestore, 'players');
-      const playersQuery = query(playersRef, where('status', '==', 'active'));
-      const playersSnap = await getDocs(playersQuery);
       
-      // Calculate stats for each player
-      const playerStatsPromises = playersSnap.docs
-        .filter(doc => {
-          const data = doc.data();
-          return data['teamId'] && data['teamId'] !== 'none';
-        })
-        .map(async (playerDoc) => {
-        }
-        )
       // Cache player stats
       this.playerStatsCache = this.playerStats;
       this.updateCacheTime();
@@ -762,6 +715,23 @@ export class Analytics implements OnInit {
     } finally {
       this.loadingPlayerStats = false;
     }
+  }
+
+  getFilteredPlayerStats(): any[] {
+    let filtered = [...this.playerStats];
+    
+    // Filter by rookie status
+    if (this.showRookieOnly) {
+      filtered = filtered.filter(player => player.rookie);
+    }
+    
+    // Sort by selected category
+    switch (this.playerStatsView) {
+      case 'goals':
+        filtered = filtered.sort((a, b) => b.goals - a.goals);
+        break;
+      case 'assists':
+        filtered = filtered.sort((a, b) => b.assists - a.assists);
         break;
       case 'points':
         filtered = filtered.sort((a, b) => b.points - a.points);
