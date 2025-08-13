@@ -117,15 +117,15 @@
   </div>
 
   <!-- Hero Section with Twitch Stream -->
-  <div class="row mb-5">
+  <div class="row mb-4 mb-md-5">
     <div class="col-12">
       <div class="card bg-dark text-white">
-        <div class="card-body text-center py-5">
-          <h1 class="display-4 mb-3">Welcome to GOHLS</h1>
-          <p class="lead mb-4">Watch live games and stay updated with the latest league action</p>
+        <div class="card-body text-center py-3 py-md-5">
+          <h1 class="display-6 display-md-4 mb-3">Welcome to GOHLS</h1>
+          <p class="lead mb-3 mb-md-4 fs-6 fs-md-5">Watch live games and stay updated with the latest league action</p>
           
           <!-- Twitch Embed -->
-          <div class="ratio ratio-16x9 mb-4" style="max-width: 800px; margin: 0 auto;">
+          <div class="ratio ratio-16x9 mb-3 mb-md-4" style="max-width: 800px; margin: 0 auto;">
             <iframe 
               src="https://player.twitch.tv/?channel=gohls_official&parent=localhost&parent=127.0.0.1&parent=your-domain.com&autoplay=false"
               allowfullscreen>
@@ -134,7 +134,7 @@
           
           <a href="https://www.twitch.tv/gohls_official" 
              target="_blank" 
-             class="btn btn-primary btn-lg">
+             class="btn btn-primary btn-lg fs-6">
             <i class="fab fa-twitch me-2"></i>Watch on Twitch
           </a>
         </div>
@@ -276,39 +276,39 @@
 
   <!-- Quick Stats Row -->
   <div class="row">
-    <div class="col-md-3 mb-3">
+    <div class="col-6 col-md-3 mb-3">
       <div class="card text-center">
-        <div class="card-body">
+        <div class="card-body py-3">
           <i class="fas fa-users fa-2x text-primary mb-2"></i>
-          <h5 class="card-title">Active Players</h5>
-          <p class="card-text display-6">{{ newestUsers.length > 0 ? '500+' : '0' }}</p>
+          <h6 class="card-title fs-6">Active Players</h6>
+          <p class="card-text h4">{{ newestUsers.length > 0 ? '500+' : '0' }}</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-6 col-md-3 mb-3">
       <div class="card text-center">
-        <div class="card-body">
+        <div class="card-body py-3">
           <i class="fas fa-trophy fa-2x text-warning mb-2"></i>
-          <h5 class="card-title">Teams</h5>
-          <p class="card-text display-6">32</p>
+          <h6 class="card-title fs-6">Teams</h6>
+          <p class="card-text h4">32</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-6 col-md-3 mb-3">
       <div class="card text-center">
-        <div class="card-body">
+        <div class="card-body py-3">
           <i class="fas fa-gamepad fa-2x text-success mb-2"></i>
-          <h5 class="card-title">Games Played</h5>
-          <p class="card-text display-6">{{ todaysGames.length > 0 ? '1000+' : '0' }}</p>
+          <h6 class="card-title fs-6">Games Played</h6>
+          <p class="card-text h4">{{ todaysGames.length > 0 ? '1000+' : '0' }}</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3 mb-3">
+    <div class="col-6 col-md-3 mb-3">
       <div class="card text-center">
-        <div class="card-body">
+        <div class="card-body py-3">
           <i class="fas fa-calendar fa-2x text-info mb-2"></i>
-          <h5 class="card-title">Current Season</h5>
-          <p class="card-text display-6">2025</p>
+          <h6 class="card-title fs-6">Current Season</h6>
+          <p class="card-text h4">2025</p>
         </div>
       </div>
     </div>

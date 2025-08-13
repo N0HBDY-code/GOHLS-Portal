@@ -1,6 +1,6 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light px-3" *ngIf="isLoggedIn">
+<nav class="navbar navbar-expand-lg navbar-light bg-light" *ngIf="isLoggedIn">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold" routerLink="/dashboard">GOHLS</a>
+      <a class="navbar-brand fw-bold fs-4" routerLink="/dashboard">GOHLS</a>
   
       <button
         class="navbar-toggler"
@@ -17,42 +17,54 @@
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link" routerLink="/dashboard">Dashboard</a>
+            <a class="nav-link px-2 py-2" routerLink="/dashboard">Dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/teams">Teams</a>
+            <a class="nav-link px-2 py-2" routerLink="/teams">Teams</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/games">Games</a>
+            <a class="nav-link px-2 py-2" routerLink="/games">Games</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/analytics">Stats and Standings</a>
+            <a class="nav-link px-2 py-2" routerLink="/analytics">
+              <span class="d-lg-none">Stats</span>
+              <span class="d-none d-lg-inline">Stats and Standings</span>
+            </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" routerLink="/player">Player</a>
+            <a class="nav-link px-2 py-2" routerLink="/player">Player</a>
           </li>
           <li class="nav-item" *ngIf="viewAsRoles.includes('developer') || viewAsRoles.includes('commissioner') || viewAsRoles.includes('gm')">
-            <a class="nav-link" routerLink="/draft">Draft</a>
+            <a class="nav-link px-2 py-2" routerLink="/draft">Draft</a>
           </li>
           <li class="nav-item" *ngIf="viewAsRoles.includes('developer') || viewAsRoles.includes('commissioner')">
-            <a class="nav-link" routerLink="/headquarters">Headquarters</a>
+            <a class="nav-link px-2 py-2" routerLink="/headquarters">
+              <span class="d-lg-none">HQ</span>
+              <span class="d-none d-lg-inline">Headquarters</span>
+            </a>
           </li>
           <li class="nav-item" *ngIf="canSeeProgression">
-            <a class="nav-link" routerLink="/progression-tracker">Progressions</a>
+            <a class="nav-link px-2 py-2" routerLink="/progression-tracker">
+              <span class="d-lg-none">Progress</span>
+              <span class="d-none d-lg-inline">Progressions</span>
+            </a>
           </li>
         </ul>
   
         <!-- Developer Role Switcher -->
-        <div class="d-flex align-items-center me-3" *ngIf="isDeveloper">
-          <label class="me-2 mb-0">View as:</label>
-          <select class="form-select" (change)="onRoleChange($event)">
+        <div class="d-flex align-items-center me-2 mb-2 mb-lg-0" *ngIf="isDeveloper">
+          <label class="me-2 mb-0 d-none d-md-inline">View as:</label>
+          <select class="form-select form-select-sm" (change)="onRoleChange($event)">
             <option value="real">Developer</option>
             <option *ngFor="let role of allRoles" [value]="role">{{ role }}</option>
           </select>
         </div>
   
         <div class="d-flex">
-          <button class="btn btn-outline-danger" (click)="logout()">Logout</button>
+          <button class="btn btn-outline-danger btn-sm" (click)="logout()">
+            <i class="fas fa-sign-out-alt d-lg-none"></i>
+            <span class="d-none d-lg-inline">Logout</span>
+          </button>
         </div>
       </div>
     </div>

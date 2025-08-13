@@ -1,1 +1,86 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global mobile-friendly styles */
+
+/* Ensure proper viewport handling */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Mobile-first responsive containers */
+.container, .container-fluid {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (max-width: 576px) {
+  .container, .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Make cards more mobile-friendly */
+  .card {
+    margin-bottom: 1rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  /* Improve button spacing on mobile */
+  .btn-group {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .btn-group .btn {
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Make tables more readable on mobile */
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .table th,
+  .table td {
+    padding: 0.5rem 0.25rem;
+    white-space: nowrap;
+  }
+  
+  /* Improve form controls on mobile */
+  .form-control,
+  .form-select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Stack columns on mobile */
+  .row > .col-md-6,
+  .row > .col-md-4,
+  .row > .col-md-3 {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Improve modal sizing on tablets */
+  .modal-dialog {
+    margin: 1rem;
+    max-width: calc(100% - 2rem);
+  }
+  
+  .modal-body {
+    padding: 1rem;
+  }
+  
+  /* Better spacing for cards */
+  .card-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Improve navigation tabs */
+  .nav-tabs .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}

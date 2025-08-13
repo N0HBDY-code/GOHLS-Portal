@@ -61,9 +61,9 @@
     </div>
     <div class="card-body">
       <!-- Week Selection -->
-      <div class="btn-group mb-4">
+      <div class="btn-group mb-4 flex-wrap">
         <button *ngFor="let week of activeWeeks"
-                class="btn"
+                class="btn btn-sm"
                 [class.btn-primary]="selectedWeek === week"
                 [class.btn-outline-primary]="selectedWeek !== week"
                 (click)="onWeekChange(week)">
@@ -87,12 +87,12 @@
             <div class="col" *ngFor="let game of getGamesForDay(weekSchedule, day)">
               <div class="game-card" (click)="viewGame(game)">
                 <!-- Home Team -->
-                <div class="team-row">
+                <div class="team-row flex-wrap">
                   <img [src]="game.homeLogo" 
                        [alt]="game.homeTeam"
                        class="team-logo"
                        *ngIf="game.homeLogo">
-                  <span class="team-name">{{ game.homeTeam }}</span>
+                  <span class="team-name text-truncate">{{ game.homeTeam }}</span>
                 </div>
 
                 <!-- Score Display -->
@@ -118,12 +118,12 @@
                 </ng-template>
 
                 <!-- Away Team -->
-                <div class="team-row">
+                <div class="team-row flex-wrap">
                   <img [src]="game.awayLogo" 
                        [alt]="game.awayTeam"
                        class="team-logo"
                        *ngIf="game.awayLogo">
-                  <span class="team-name">{{ game.awayTeam }}</span>
+                  <span class="team-name text-truncate">{{ game.awayTeam }}</span>
                 </div>
 
                 <!-- Game Tags -->

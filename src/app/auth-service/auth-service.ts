@@ -95,6 +95,9 @@ export class Auths {
         throw new Error('Username not found');
       }
       return signInWithEmailAndPassword(this.auth, email, password).then(async userCredential => {
+        // Set last activity timestamp
+        localStorage.setItem('lastActivity', Date.now().toString());
+        
         this.userSubject.next(userCredential.user);
 
         const snapshot = await getDoc(doc(this.firestore, 'users', userCredential.user.uid));
@@ -133,6 +136,8 @@ export class Auths {
     this.userSubject.next(null);
     this.rolesSubject.next([]);
     this.viewAsRoleSubject.next(null);
+    // Clear session data
+    localStorage.removeItem('lastActivity');
     return signOut(this.auth);
   }
 }
