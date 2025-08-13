@@ -527,7 +527,7 @@
         </div>
 
         <!-- Comprehensive Team Analytics -->
-        <div *ngIf="selectedTeamId && selectedTeamName">
+        <div *ngIf="selectedTeamId && selectedTeamName && teamAnalytics.totalGames > 0">
           <!-- Team Header -->
           <div class="alert alert-info mb-4">
             <h4 class="mb-0">
@@ -820,6 +820,98 @@
               </div>
             </div>
           </div>
+        </div>
+        
+        <!-- Team Roster with Season Stats -->
+        <div *ngIf="selectedTeamId && selectedTeamName && teamRoster.length > 0" class="card">
+          <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">
+              <i class="fas fa-users me-2"></i>{{ selectedTeamName }} - Season Player Stats
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>Pos</th>
+                    <th>GP</th>
+                    <th>G</th>
+                    <th>A</th>
+                    <th>PTS</th>
+                    <th>+/-</th>
+                    <th>PIM</th>
+                    <th>Shots</th>
+                    <th>S%</th>
+                    <th>Hits</th>
+                    <th>PPG</th>
+                    <th>SHG</th>
+                    <th>TOI</th>
+                    <th *ngIf="hasGoalies()">Saves</th>
+                    <th *ngIf="hasGoalies()">SA</th>
+                    <th *ngIf="hasGoalies()">SV%</th>
+                    <th *ngIf="hasGoalies()">GAA</th>
+                    <th *ngIf="hasGoalies()">SO</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let player of teamRoster">
+                    <td>{{ player.number }}</td>
+                    <td>
+                      <div class="player-info">
+                        <div class="player-name">{{ player.name }}</div>
+                        <small class="text-muted" *ngIf="player.rookie">
+                          <i class="fas fa-star text-warning me-1"></i>Rookie
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge position-badge" 
+                            [style.background-color]="getPositionColor(player.position)">
+                        {{ player.position }}
+                      </span>
+                    </td>
+                    <td>{{ player.games }}</td>
+                    <td>{{ player.goals }}</td>
+                    <td>{{ player.assists }}</td>
+                    <td><strong>{{ player.points }}</strong></td>
+                    <td [class.text-success]="player.plusMinus > 0" 
+                        [class.text-danger]="player.plusMinus < 0">
+                      {{ player.plusMinus > 0 ? '+' : '' }}{{ player.plusMinus }}
+                    </td>
+                    <td>{{ player.pim }}</td>
+                    <td>{{ player.shots }}</td>
+                    <td>{{ player.shootingPercentage.toFixed(1) }}%</td>
+                    <td>{{ player.hits }}</td>
+                    <td>{{ player.ppg }}</td>
+                    <td>{{ player.shg }}</td>
+                    <td>{{ formatTimeOnIce(player.timeOnIce) }}</td>
+                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.saves }}</td>
+                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.shotsAgainst }}</td>
+                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.savePercentage.toFixed(1) }}%</td>
+                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.gaa.toFixed(2) }}</td>
+                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.shutouts }}</td>
+                    <!-- Empty cells for non-goalies -->
+                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
+                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
+                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
+                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
+                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- No Data Message -->
+        <div *ngIf="selectedTeamId && selectedTeamName && teamAnalytics.totalGames === 0" class="alert alert-warning">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>No Game Data Found</strong><br>
+          This team doesn't have any completed games with scores recorded yet.
+        </div>
       </div>
     </div>
   </div>

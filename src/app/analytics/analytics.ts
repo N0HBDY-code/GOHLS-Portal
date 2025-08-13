@@ -678,6 +678,7 @@ export class Analytics implements OnInit {
   }
 
   resetAnalytics() {
+    this.teamRoster = [];
     this.teamAnalytics = {
       homeRecord: { wins: 0, losses: 0, otl: 0 },
       awayRecord: { wins: 0, losses: 0, otl: 0 },
