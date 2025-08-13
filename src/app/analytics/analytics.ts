@@ -121,13 +121,54 @@ export class Analytics implements OnInit {
   // Analytics properties
   selectedTeamId = '';
   selectedTeamName = '';
-  totalGames = 0;
-  totalPoints = 0;
-  totalAssists = 0;
-  totalRebounds = 0;
-  avgPoints = '0.0';
-  avgAssists = '0.0';
-  avgRebounds = '0.0';
+  
+  // Comprehensive team analytics
+  teamAnalytics = {
+    // Record stats
+    homeRecord: { wins: 0, losses: 0, otl: 0 },
+    awayRecord: { wins: 0, losses: 0, otl: 0 },
+    currentStreak: { type: '', count: 0 },
+    longestWinStreak: 0,
+    longestLoseStreak: 0,
+    
+    // Offensive stats
+    goals: 0,
+    evenStrengthGoals: 0,
+    mostGoalsInGame: 0,
+    shotAttempts: 0,
+    shootingPercentage: 0,
+    avgGoalsPerGame: 0,
+    
+    // Defensive stats
+    goalsAgainst: 0,
+    mostGoalsAgainstInGame: 0,
+    shotsAgainst: 0,
+    goalsAgainstPercentage: 0,
+    avgGoalsAgainstPerGame: 0,
+    
+    // General stats
+    goalDifferential: 0,
+    hits: 0,
+    passingPercentage: 0,
+    faceoffsTaken: 0,
+    faceoffsWon: 0,
+    faceoffPercentage: 0,
+    
+    // Special teams
+    powerplayTimeOnIce: 0,
+    penaltyKills: { successful: 0, total: 0 },
+    penaltyKillPercentage: 0,
+    
+    // Time stats
+    timeOnAttack: 0,
+    timeOnAttackPerGoal: 0,
+    timeOnDefense: 0,
+    timeOnDefensePerGoal: 0,
+    fights: 0,
+    
+    // Game count
+    totalGames: 0
+  };
 
   // Reports properties
   exportGames: Game[] = [];
@@ -405,17 +446,11 @@ export class Analytics implements OnInit {
 
   async onTeamSelect() {
     // Use cached data if available
-    const cacheKey = `team-${this.selectedTeamId}`;
+    const cacheKey = `team-analytics-${this.selectedTeamId}`;
     if (this.teamStatsCache.has(cacheKey) && this.isCacheValid()) {
-      const cachedStats = this.teamStatsCache.get(cacheKey);
-      this.totalGames = cachedStats.totalGames;
-      this.totalPoints = cachedStats.totalPoints;
-      this.totalAssists = cachedStats.totalAssists;
-      this.totalRebounds = cachedStats.totalRebounds;
-      this.avgPoints = cachedStats.avgPoints;
-      this.avgAssists = cachedStats.avgAssists;
-      this.avgRebounds = cachedStats.avgRebounds;
-      this.selectedTeamName = cachedStats.selectedTeamName;
+      const cachedAnalytics = this.teamStatsCache.get(cacheKey);
+      this.teamAnalytics = cachedAnalytics.teamAnalytics;
+      this.selectedTeamName = cachedAnalytics.selectedTeamName;
       return;
     }
 
@@ -428,31 +463,11 @@ export class Analytics implements OnInit {
     this.selectedTeamName = team?.name || '';
 
     try {
-      // Use cached games if available
-      let games: Game[];
-      if (this.gamesCache.has(this.selectedTeamId)) {
-        games = this.gamesCache.get(this.selectedTeamId) || [];
-      } else {
-        const gamesQuery = query(
-          collection(this.firestore, 'games'),
-          where('teamId', '==', this.selectedTeamId)
-        );
-        const snapshot = await getDocs(gamesQuery);
-        games = snapshot.docs.map(doc => doc.data() as Game);
-        this.gamesCache.set(this.selectedTeamId, games);
-      }
-      
-      this.calculateAnalytics(games);
+      await this.calculateTeamAnalytics();
       
       // Cache the calculated analytics
       this.teamStatsCache.set(cacheKey, {
-        totalGames: this.totalGames,
-        totalPoints: this.totalPoints,
-        totalAssists: this.totalAssists,
-        totalRebounds: this.totalRebounds,
-        avgPoints: this.avgPoints,
-        avgAssists: this.avgAssists,
-        avgRebounds: this.avgRebounds,
+        teamAnalytics: this.teamAnalytics,
         selectedTeamName: this.selectedTeamName
       });
     } catch (error) {
@@ -460,39 +475,242 @@ export class Analytics implements OnInit {
     }
   }
 
-  calculateAnalytics(games: Game[]) {
-    this.totalGames = games.length;
+  async calculateTeamAnalytics() {
+    // Reset analytics
+    this.resetAnalytics();
     
-    let totalPoints = 0;
-    let totalAssists = 0;
-    let totalRebounds = 0;
-    
-    games.forEach(game => {
-      game.players.forEach(player => {
-        totalPoints += player.points;
-        totalAssists += player.assists;
-        totalRebounds += player.rebounds;
+    try {
+      // Load all games for this team from main games collection
+      const allGamesQuery = query(
+        collection(this.firestore, 'games'),
+        where('homeTeamId', '==', this.selectedTeamId)
+      );
+      const awayGamesQuery = query(
+        collection(this.firestore, 'games'),
+        where('awayTeamId', '==', this.selectedTeamId)
+      );
+      
+      const [homeGamesSnap, awayGamesSnap] = await Promise.all([
+        getDocs(allGamesQuery),
+        getDocs(awayGamesQuery)
+      ]);
+      
+      const allTeamGames = [
+        ...homeGamesSnap.docs.map(doc => ({ ...doc.data(), isHome: true, gameId: doc.id })),
+        ...awayGamesSnap.docs.map(doc => ({ ...doc.data(), isHome: false, gameId: doc.id }))
+      ];
+      
+      // Sort games by date for streak calculation
+      const sortedGames = allTeamGames
+        .filter(game => game.homeScore !== undefined && game.awayScore !== undefined)
+        .sort((a, b) => {
+          const aDate = a.date?.toDate?.() || new Date(a.date);
+          const bDate = b.date?.toDate?.() || new Date(b.date);
+          return aDate.getTime() - bDate.getTime();
+        });
+      
+      this.teamAnalytics.totalGames = sortedGames.length;
+      
+      if (sortedGames.length === 0) return;
+      
+      // Process each game
+      let currentStreakType = '';
+      let currentStreakCount = 0;
+      let tempWinStreak = 0;
+      let tempLoseStreak = 0;
+      let maxWinStreak = 0;
+      let maxLoseStreak = 0;
+      
+      sortedGames.forEach((game, index) => {
+        const isHome = game.isHome;
+        const teamScore = isHome ? game.homeScore : game.awayScore;
+        const opponentScore = isHome ? game.awayScore : game.homeScore;
+        const teamStats = isHome ? game.homeStats : game.awayStats;
+        const period = game.period;
+        
+        // Record tracking
+        const isWin = teamScore > opponentScore;
+        const isOTLoss = teamScore < opponentScore && (period === 'OT' || period === 'SO');
+        
+        if (isHome) {
+          if (isWin) this.teamAnalytics.homeRecord.wins++;
+          else if (isOTLoss) this.teamAnalytics.homeRecord.otl++;
+          else this.teamAnalytics.homeRecord.losses++;
+        } else {
+          if (isWin) this.teamAnalytics.awayRecord.wins++;
+          else if (isOTLoss) this.teamAnalytics.awayRecord.otl++;
+          else this.teamAnalytics.awayRecord.losses++;
+        }
+        
+        // Streak calculation
+        if (isWin) {
+          if (currentStreakType === 'W') {
+            currentStreakCount++;
+          } else {
+            currentStreakType = 'W';
+            currentStreakCount = 1;
+          }
+          tempWinStreak++;
+          tempLoseStreak = 0;
+        } else {
+          if (currentStreakType === 'L') {
+            currentStreakCount++;
+          } else {
+            currentStreakType = 'L';
+            currentStreakCount = 1;
+          }
+          tempLoseStreak++;
+          tempWinStreak = 0;
+        }
+        
+        maxWinStreak = Math.max(maxWinStreak, tempWinStreak);
+        maxLoseStreak = Math.max(maxLoseStreak, tempLoseStreak);
+        
+        // Offensive stats
+        this.teamAnalytics.goals += teamScore;
+        this.teamAnalytics.mostGoalsInGame = Math.max(this.teamAnalytics.mostGoalsInGame, teamScore);
+        
+        // Defensive stats
+        this.teamAnalytics.goalsAgainst += opponentScore;
+        this.teamAnalytics.mostGoalsAgainstInGame = Math.max(this.teamAnalytics.mostGoalsAgainstInGame, opponentScore);
+        
+        // Goal differential
+        this.teamAnalytics.goalDifferential += (teamScore - opponentScore);
+        
+        // Team stats from game data
+        if (teamStats) {
+          this.teamAnalytics.shotAttempts += teamStats.totalShots || 0;
+          this.teamAnalytics.shotsAgainst += (isHome ? game.awayStats?.totalShots : game.homeStats?.totalShots) || 0;
+          this.teamAnalytics.hits += teamStats.hits || 0;
+          this.teamAnalytics.passingPercentage += teamStats.passingPercentage || 0;
+          this.teamAnalytics.faceoffsWon += teamStats.faceoffsWon || 0;
+          this.teamAnalytics.penaltyKills.total += teamStats.penaltyKills?.total || 0;
+          this.teamAnalytics.penaltyKills.successful += teamStats.penaltyKills?.successful || 0;
+          this.teamAnalytics.powerplayTimeOnIce += teamStats.powerplayMinutes || 0;
+          
+          // Time stats (convert to minutes)
+          const timeOnAttack = teamStats.timeOnAttack || { minutes: 0, seconds: 0 };
+          this.teamAnalytics.timeOnAttack += timeOnAttack.minutes + (timeOnAttack.seconds / 60);
+          
+          // Estimate time on defense (60 - time on attack - neutral time)
+          const attackTime = timeOnAttack.minutes + (timeOnAttack.seconds / 60);
+          this.teamAnalytics.timeOnDefense += Math.max(0, 60 - attackTime - 10); // Assume 10 min neutral
+          
+          this.teamAnalytics.fights += teamStats.fights || 0;
+        }
       });
-    });
-    
-    this.totalPoints = totalPoints;
-    this.totalAssists = totalAssists;
-    this.totalRebounds = totalRebounds;
-    
-    this.avgPoints = this.totalGames > 0 ? (totalPoints / this.totalGames).toFixed(1) : '0.0';
-    this.avgAssists = this.totalGames > 0 ? (totalAssists / this.totalGames).toFixed(1) : '0.0';
-    this.avgRebounds = this.totalGames > 0 ? (totalRebounds / this.totalGames).toFixed(1) : '0.0';
+      
+      // Set current streak
+      this.teamAnalytics.currentStreak = {
+        type: currentStreakType,
+        count: currentStreakCount
+      };
+      
+      this.teamAnalytics.longestWinStreak = maxWinStreak;
+      this.teamAnalytics.longestLoseStreak = maxLoseStreak;
+      
+      // Calculate averages and percentages
+      if (this.teamAnalytics.totalGames > 0) {
+        this.teamAnalytics.avgGoalsPerGame = this.teamAnalytics.goals / this.teamAnalytics.totalGames;
+        this.teamAnalytics.avgGoalsAgainstPerGame = this.teamAnalytics.goalsAgainst / this.teamAnalytics.totalGames;
+        this.teamAnalytics.passingPercentage = this.teamAnalytics.passingPercentage / this.teamAnalytics.totalGames;
+      }
+      
+      if (this.teamAnalytics.shotAttempts > 0) {
+        this.teamAnalytics.shootingPercentage = (this.teamAnalytics.goals / this.teamAnalytics.shotAttempts) * 100;
+      }
+      
+      if (this.teamAnalytics.shotsAgainst > 0) {
+        this.teamAnalytics.goalsAgainstPercentage = (this.teamAnalytics.goalsAgainst / this.teamAnalytics.shotsAgainst) * 100;
+      }
+      
+      if (this.teamAnalytics.faceoffsTaken > 0) {
+        this.teamAnalytics.faceoffPercentage = (this.teamAnalytics.faceoffsWon / this.teamAnalytics.faceoffsTaken) * 100;
+      }
+      
+      if (this.teamAnalytics.penaltyKills.total > 0) {
+        this.teamAnalytics.penaltyKillPercentage = (this.teamAnalytics.penaltyKills.successful / this.teamAnalytics.penaltyKills.total) * 100;
+      }
+      
+      if (this.teamAnalytics.goals > 0) {
+        this.teamAnalytics.timeOnAttackPerGoal = this.teamAnalytics.timeOnAttack / this.teamAnalytics.goals;
+      }
+      
+      if (this.teamAnalytics.goalsAgainst > 0) {
+        this.teamAnalytics.timeOnDefensePerGoal = this.teamAnalytics.timeOnDefense / this.teamAnalytics.goalsAgainst;
+      }
+      
+      // Calculate faceoffs taken (won + lost, estimated from other teams' data)
+      this.teamAnalytics.faceoffsTaken = this.teamAnalytics.faceoffsWon * 2; // Rough estimate
+      
+    } catch (error) {
+      console.error('Error calculating team analytics:', error);
+    }
   }
 
   resetAnalytics() {
-    this.totalGames = 0;
-    this.totalPoints = 0;
-    this.totalAssists = 0;
-    this.totalRebounds = 0;
-    this.avgPoints = '0.0';
-    this.avgAssists = '0.0';
-    this.avgRebounds = '0.0';
+    this.teamAnalytics = {
+      homeRecord: { wins: 0, losses: 0, otl: 0 },
+      awayRecord: { wins: 0, losses: 0, otl: 0 },
+      currentStreak: { type: '', count: 0 },
+      longestWinStreak: 0,
+      longestLoseStreak: 0,
+      goals: 0,
+      evenStrengthGoals: 0,
+      mostGoalsInGame: 0,
+      shotAttempts: 0,
+      shootingPercentage: 0,
+      avgGoalsPerGame: 0,
+      goalsAgainst: 0,
+      mostGoalsAgainstInGame: 0,
+      shotsAgainst: 0,
+      goalsAgainstPercentage: 0,
+      avgGoalsAgainstPerGame: 0,
+      goalDifferential: 0,
+      hits: 0,
+      passingPercentage: 0,
+      faceoffsTaken: 0,
+      faceoffsWon: 0,
+      faceoffPercentage: 0,
+      powerplayTimeOnIce: 0,
+      penaltyKills: { successful: 0, total: 0 },
+      penaltyKillPercentage: 0,
+      timeOnAttack: 0,
+      timeOnAttackPerGoal: 0,
+      timeOnDefense: 0,
+      timeOnDefensePerGoal: 0,
+      fights: 0,
+      totalGames: 0
+    };
     this.selectedTeamName = '';
+  }
+
+  // Helper methods for formatting
+  formatRecord(record: { wins: number; losses: number; otl: number }): string {
+    return `${record.wins}-${record.losses}-${record.otl}`;
+  }
+  
+  formatStreak(streak: { type: string; count: number }): string {
+    if (!streak.type || streak.count === 0) return 'None';
+    return `${streak.type}${streak.count}`;
+  }
+  
+  formatPercentage(value: number): string {
+    return `${value.toFixed(1)}%`;
+  }
+  
+  formatDecimal(value: number, decimals: number = 1): string {
+    return value.toFixed(decimals);
+  }
+  
+  formatTime(minutes: number): string {
+    const mins = Math.floor(minutes);
+    const secs = Math.round((minutes - mins) * 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+  
+  formatPenaltyKills(successful: number, total: number): string {
+    return `${successful}/${total}`;
   }
 
   async onExportTeamSelect() {
