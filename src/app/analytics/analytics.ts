@@ -459,8 +459,10 @@ export class Analytics implements OnInit {
       return;
     }
 
-    const team = (this.teamsCache || this.teams).find(t => t.id === this.selectedTeamId);
+    const team = this.teams.find(t => t.id === this.selectedTeamId);
     this.selectedTeamName = team?.name || '';
+
+    console.log('🔍 Loading analytics for team:', this.selectedTeamName, 'ID:', this.selectedTeamId);
 
     try {
       await this.calculateTeamAnalytics();
@@ -470,6 +472,8 @@ export class Analytics implements OnInit {
         teamAnalytics: this.teamAnalytics,
         selectedTeamName: this.selectedTeamName
       });
+      
+      console.log('✅ Team analytics calculated:', this.teamAnalytics);
     } catch (error) {
       console.error('Error loading team analytics:', error);
     }
@@ -478,6 +482,8 @@ export class Analytics implements OnInit {
   async calculateTeamAnalytics() {
     // Reset analytics
     this.resetAnalytics();
+    
+    console.log('📊 Calculating analytics for team ID:', this.selectedTeamId);
     
     try {
       // Load all games for this team from main games collection
@@ -495,28 +501,18 @@ export class Analytics implements OnInit {
         getDocs(awayGamesQuery)
       ]);
       
+      console.log(`📈 Found ${homeGamesSnap.docs.length} home games and ${awayGamesSnap.docs.length} away games`);
+      
       const allTeamGames: any[] = [
         ...homeGamesSnap.docs.map(doc => ({ 
           ...doc.data(), 
           isHome: true, 
           gameId: doc.id,
-          homeScore: doc.data()['homeScore'],
-          awayScore: doc.data()['awayScore'],
-          homeStats: doc.data()['homeStats'],
-          awayStats: doc.data()['awayStats'],
-          period: doc.data()['period'],
-          date: doc.data()['date']
         })),
         ...awayGamesSnap.docs.map(doc => ({ 
           ...doc.data(), 
           isHome: false, 
           gameId: doc.id,
-          homeScore: doc.data()['homeScore'],
-          awayScore: doc.data()['awayScore'],
-          homeStats: doc.data()['homeStats'],
-          awayStats: doc.data()['awayStats'],
-          period: doc.data()['period'],
-          date: doc.data()['date']
         }))
       ];
       
@@ -528,6 +524,8 @@ export class Analytics implements OnInit {
           const bDate = b.date?.toDate?.() || new Date(b.date);
           return aDate.getTime() - bDate.getTime();
         });
+      
+      console.log(`🎯 Processing ${sortedGames.length} completed games`);
       
       this.teamAnalytics.totalGames = sortedGames.length;
       
@@ -546,6 +544,7 @@ export class Analytics implements OnInit {
         const teamScore = isHome ? game.homeScore : game.awayScore;
         const opponentScore = isHome ? game.awayScore : game.homeScore;
         const teamStats = isHome ? game.homeStats : game.awayStats;
+        const opponentStats = isHome ? game.awayStats : game.homeStats;
         const period = game.period;
         
         // Record tracking
@@ -600,10 +599,17 @@ export class Analytics implements OnInit {
         // Team stats from game data
         if (teamStats) {
           this.teamAnalytics.shotAttempts += teamStats.totalShots || 0;
-          this.teamAnalytics.shotsAgainst += (isHome ? game.awayStats?.totalShots : game.homeStats?.totalShots) || 0;
+          this.teamAnalytics.shotsAgainst += opponentStats?.totalShots || 0;
           this.teamAnalytics.hits += teamStats.hits || 0;
-          this.teamAnalytics.passingPercentage += teamStats.passingPercentage || 0;
+          
+          // Accumulate passing percentage for later averaging
+          if (teamStats.passingPercentage !== undefined) {
+            this.teamAnalytics.passingPercentage += teamStats.passingPercentage;
+          }
+          
           this.teamAnalytics.faceoffsWon += teamStats.faceoffsWon || 0;
+          this.teamAnalytics.faceoffsTaken += (teamStats.faceoffsWon || 0) + (teamStats.faceoffsLost || 0);
+          
           this.teamAnalytics.penaltyKills.total += teamStats.penaltyKills?.total || 0;
           this.teamAnalytics.penaltyKills.successful += teamStats.penaltyKills?.successful || 0;
           this.teamAnalytics.powerplayTimeOnIce += teamStats.powerplayMinutes || 0;
@@ -617,6 +623,11 @@ export class Analytics implements OnInit {
           this.teamAnalytics.timeOnDefense += Math.max(0, 60 - attackTime - 10); // Assume 10 min neutral
           
           this.teamAnalytics.fights += teamStats.fights || 0;
+          
+          // Calculate even strength goals (total goals minus powerplay and shorthanded)
+          const ppGoals = teamStats.powerplayGoals || 0;
+          const shGoals = teamStats.shorthandedGoals || 0;
+          this.teamAnalytics.evenStrengthGoals += Math.max(0, teamScore - ppGoals - shGoals);
         }
       });
       
@@ -660,9 +671,7 @@ export class Analytics implements OnInit {
         this.teamAnalytics.timeOnDefensePerGoal = this.teamAnalytics.timeOnDefense / this.teamAnalytics.goalsAgainst;
       }
       
-      // Calculate faceoffs taken (won + lost, estimated from other teams' data)
-      this.teamAnalytics.faceoffsTaken = this.teamAnalytics.faceoffsWon * 2; // Rough estimate
-      
+      console.log('📊 Final team analytics:', this.teamAnalytics);
     } catch (error) {
       console.error('Error calculating team analytics:', error);
     }
