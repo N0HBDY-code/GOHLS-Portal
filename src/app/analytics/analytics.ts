@@ -61,7 +61,7 @@ interface Conference {
   styleUrls: ['./analytics.css']
 })
 export class Analytics implements OnInit {
-  currentView: 'standings' | 'playerstats' | 'analytics' | 'reports' = 'standings';
+  currentView: 'standings' | 'playerstats' | 'analytics' = 'standings';
   
   // Caching system
   private teamsCache: Team[] | null = null;
@@ -756,20 +756,20 @@ export class Analytics implements OnInit {
         getDocs(awayGamesQuery)
       ]);
       
-      const allGames = [
+      const allGames: any[] = [
         ...homeGamesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })),
         ...awayGamesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       ];
       
       // Sort by date
       this.exportGames = allGames
-        .filter(game => game['date']) // Only games with dates
+        .filter((game: any) => game['date']) // Only games with dates
         .sort((a, b) => {
-          const aDate = a['date']?.toDate?.() || new Date(a['date']);
-          const bDate = b['date']?.toDate?.() || new Date(b['date']);
+          const aDate = (a as any)['date']?.toDate?.() || new Date((a as any)['date']);
+          const bDate = (b as any)['date']?.toDate?.() || new Date((b as any)['date']);
           return bDate.getTime() - aDate.getTime();
         })
-        .map(game => ({
+        .map((game: any) => ({
           id: game.id,
           teamId: this.selectedExportTeamId,
           opponent: game['opponent'] || 'Unknown',

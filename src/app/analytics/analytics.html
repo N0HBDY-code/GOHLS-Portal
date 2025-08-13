@@ -831,49 +831,4 @@
     </div>
   </div>
 
-  <!-- Export Reports View -->
-  <div *ngIf="currentView === 'reports'">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="mb-0">Export Game Data</h5>
-      </div>
-      <div class="card-body">
-        <!-- Team Selection -->
-        <div class="mb-3">
-          <label for="exportTeamSelect" class="form-label">Select Team</label>
-          <select id="exportTeamSelect" class="form-select" [(ngModel)]="selectedExportTeamId" (change)="onExportTeamSelect()">
-            <option value="">-- Choose a Team --</option>
-            <option *ngFor="let team of teams" [value]="team.id">{{ team.name }}</option>
-          </select>
-        </div>
-
-        <!-- Game Selection -->
-        <div class="mb-3" *ngIf="selectedExportTeamId">
-          <label for="exportGameSelect" class="form-label">Select Game</label>
-          <select id="exportGameSelect" class="form-select" [(ngModel)]="selectedExportGameId">
-            <option value="">-- Choose a Game --</option>
-            <option *ngFor="let game of exportGames" [value]="game.id">
-              {{ game['date']?.toDate?.() ? (game['date'].toDate() | date:'mediumDate') : game['date'] }} vs {{ game['opponent'] }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Export Button -->
-        <div class="text-center mt-4">
-          <button class="btn btn-success" 
-                  (click)="exportSelectedGameToCSV()" 
-                  [disabled]="!selectedExportTeamId || !selectedExportGameId">
-            <i class="fas fa-download me-2"></i>Export Selected Game to CSV
-          </button>
-        </div>
-
-        <!-- No Team Selected Message -->
-        <div *ngIf="!selectedTeamId" class="text-center py-5 text-muted">
-          <i class="fas fa-chart-bar fa-3x mb-3"></i>
-          <h5>Select a Team</h5>
-          <p>Choose a team from the dropdown above to view detailed analytics</p>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
