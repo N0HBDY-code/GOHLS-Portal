@@ -934,8 +934,21 @@ export class Headquarters implements OnInit {
       });
 
       // Update local display
+      this.success = `GM role assigned successfully to ${this.selectedUserForGm.displayName}`;
+      setTimeout(() => this.success = '', 3000);
+      
+      this.showGmRoleModal = false;
+      this.selectedUserForGm = null;
+      this.selectedTeamForGm = '';
+    } catch (error) {
+      console.error('Error assigning GM role:', error);
+      this.error = 'Failed to assign GM role';
+      setTimeout(() => this.error = '', 3000);
+    } finally {
+      this.loading = false;
     }
   }
+
   get majorLeagueTeamsFiltered(): Team[] {
     return this.allTeams.filter(t => (t.league || '') === 'major');
   }
@@ -951,7 +964,7 @@ export class Headquarters implements OnInit {
   formatRoleDisplay(role: string): string {
     if (role.startsWith('gm:')) {
       const teamId = role.split(':')[1];
-      const teamName = this.getTeamNameById(teamId);
+      const teamName = this.getTeamName(teamId);
       return `GM - ${teamName}`;
     }
     return role;
