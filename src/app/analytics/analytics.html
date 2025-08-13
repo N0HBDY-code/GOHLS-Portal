@@ -527,7 +527,7 @@
         </div>
 
         <!-- Comprehensive Team Analytics -->
-        <div *ngIf="selectedTeamId && selectedTeamName && teamAnalytics.totalGames > 0">
+        <div *ngIf="selectedTeamId && selectedTeamName">
           <!-- Team Header -->
           <div class="alert alert-info mb-4">
             <h4 class="mb-0">
@@ -536,6 +536,15 @@
             <p class="mb-0 mt-2">Complete statistical breakdown for the current season</p>
           </div>
 
+          <!-- Show message if no games found -->
+          <div *ngIf="teamAnalytics.totalGames === 0" class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>No Game Data Found</strong><br>
+            This team doesn't have any completed games with scores recorded yet.
+          </div>
+
+          <!-- Show analytics if games exist -->
+          <div *ngIf="teamAnalytics.totalGames > 0">
           <!-- Record & Streaks Section -->
           <div class="row mb-4">
             <div class="col-md-6">
@@ -820,10 +829,11 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
         
         <!-- Team Roster with Season Stats -->
-        <div *ngIf="selectedTeamId && selectedTeamName && teamRoster.length > 0" class="card">
+        <div *ngIf="selectedTeamId && selectedTeamName && teamRoster.length > 0" class="card mt-4">
           <div class="card-header bg-dark text-white">
             <h5 class="mb-0">
               <i class="fas fa-users me-2"></i>{{ selectedTeamName }} - Season Player Stats
@@ -904,13 +914,6 @@
               </table>
             </div>
           </div>
-        </div>
-        
-        <!-- No Data Message -->
-        <div *ngIf="selectedTeamId && selectedTeamName && teamAnalytics.totalGames === 0" class="alert alert-warning">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          <strong>No Game Data Found</strong><br>
-          This team doesn't have any completed games with scores recorded yet.
         </div>
       </div>
     </div>
