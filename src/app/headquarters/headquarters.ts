@@ -16,16 +16,11 @@ interface UserSearchResult {
 interface Team {
   id: string;
   name: string;
-  city?: string;
-  mascot?: string;
-  league?: string;
-  conference?: string;
-  division?: string;
-  city?: string;
-  mascot?: string;
-  league?: string;
-  conference?: string;
-  division?: string;
+  city: string;
+  mascot: string;
+  league: string;
+  conference: string;
+  division: string;
 }
 
 interface SeasonHistory {
