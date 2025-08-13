@@ -652,12 +652,12 @@
             <select class="form-select" [(ngModel)]="selectedTeamForGm">
               <option value="">-- Choose a Team --</option>
               <optgroup label="Major League">
-                <option *ngFor="let team of allTeams.filter(t => t.league === 'major')" [value]="team.id">
+                <option *ngFor="let team of majorLeagueTeamsFiltered" [value]="team.id">
                   {{ team.name }}
                 </option>
               </optgroup>
               <optgroup label="Minor League">
-                <option *ngFor="let team of allTeams.filter(t => t.league === 'minor')" [value]="team.id">
+                <option *ngFor="let team of minorLeagueTeamsFiltered" [value]="team.id">
                   {{ team.name }}
                 </option>
               </optgroup>

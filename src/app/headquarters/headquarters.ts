@@ -142,7 +142,7 @@ export class Headquarters implements OnInit {
       this.loadNewPlayers(),
       this.loadTeams(),
       this.loadPendingPlayers(),
-      this.loadAllTeams()
+      this.loadTeams()
     ]);
   }
 
@@ -904,6 +904,14 @@ export class Headquarters implements OnInit {
   getTeamNameById(teamId: string): string {
     const team = this.allTeams.find(t => t.id === teamId);
     return team ? team.name : 'Unknown Team';
+  }
+
+  get majorLeagueTeamsFiltered(): Team[] {
+    return this.allTeams.filter(t => (t.league || '') === 'major');
+  }
+
+  get minorLeagueTeamsFiltered(): Team[] {
+    return this.allTeams.filter(t => (t.league || '') === 'minor');
   }
 
   formatRoleDisplay(role: string): string {
