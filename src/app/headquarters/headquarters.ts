@@ -115,11 +115,16 @@ export class Headquarters implements OnInit {
     'viewer',
     'developer',
     'commissioner',
-    'gm',
     'stats monkey',
     'finance officer',
     'progression tracker'
   ];
+
+  // Team-specific GM role management
+  showGmRoleModal = false;
+  selectedUserForGm: any = null;
+  selectedTeamForGm = '';
+  allTeams: Team[] = [];
 
   async ngOnInit() {
     // Check permissions
@@ -136,7 +141,8 @@ export class Headquarters implements OnInit {
       this.loadPendingTrades(),
       this.loadNewPlayers(),
       this.loadTeams(),
-      this.loadPendingPlayers()
+      this.loadPendingPlayers(),
+      this.loadAllTeams()
     ]);
   }
 
@@ -786,6 +792,14 @@ export class Headquarters implements OnInit {
 
   async addRole() {
     if (!this.selectedUser || !this.selectedRole) return;
+
+    // Handle GM role specially
+    if (this.selectedRole === 'gm') {
+      this.selectedUserForGm = this.selectedUser;
+      this.showGmRoleModal = true;
+      this.selectedRole = ''; // Reset selection
+      return;
+    }
 
     this.loading = true;
     this.error = '';
