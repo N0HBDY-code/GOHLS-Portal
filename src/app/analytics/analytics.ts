@@ -1129,6 +1129,11 @@ export class Analytics implements OnInit {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   }
 
+  getSelectedTeamLogo(): string {
+    const team = this.teams.find(t => t.id === this.selectedTeamId);
+    return team?.logoUrl || '';
+  }
+
   async loadTeamRoster() {
     if (!this.selectedTeamId) {
       this.teamRoster = [];

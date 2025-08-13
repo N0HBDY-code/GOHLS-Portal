@@ -535,78 +535,383 @@
           <p>Team Roster Length: {{ teamRoster.length || 0 }}</p>
         </div>
 
-        <!-- Comprehensive Team Analytics -->
+        <!-- Team Analytics Display -->
         <div *ngIf="selectedTeamId && selectedTeamName">
-          <!-- Team Header -->
-          <div class="alert alert-info mb-4">
-            <h4 class="mb-0">
-              <i class="fas fa-chart-line me-2"></i>{{ selectedTeamName }} - Season Analytics
-            </h4>
-            <p class="mb-0 mt-2">Complete statistical breakdown for the current season</p>
+          <!-- Team Header with Logo -->
+          <div class="team-analytics-header">
+            <div class="d-flex align-items-center justify-content-center mb-4">
+              <div class="team-logo-container me-4">
+                <img *ngIf="getSelectedTeamLogo()" 
+                     [src]="getSelectedTeamLogo()" 
+                     [alt]="selectedTeamName"
+                     class="team-logo-large">
+                <div *ngIf="!getSelectedTeamLogo()" class="team-logo-placeholder">
+                  <i class="fas fa-hockey-puck fa-3x"></i>
+                </div>
+              </div>
+              <div class="team-header-info">
+                <h2 class="team-name-large">{{ selectedTeamName }}</h2>
+                <p class="team-subtitle">Season Analytics Dashboard</p>
+                <div class="quick-stats">
+                  <span class="quick-stat-item">
+                    <i class="fas fa-calendar me-1"></i>{{ teamAnalytics.totalGames }} Games
+                  </span>
+                  <span class="quick-stat-item">
+                    <i class="fas fa-chart-line me-1"></i>
+                    {{ formatRecord({ 
+                      wins: teamAnalytics.homeRecord.wins + teamAnalytics.awayRecord.wins,
+                      losses: teamAnalytics.homeRecord.losses + teamAnalytics.awayRecord.losses,
+                      otl: teamAnalytics.homeRecord.otl + teamAnalytics.awayRecord.otl
+                    }) }}
+                  </span>
+                  <span class="quick-stat-item">
+                    <i class="fas fa-bullseye me-1"></i>{{ teamAnalytics.goalDifferential > 0 ? '+' : '' }}{{ teamAnalytics.goalDifferential }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- Show message if no games found -->
-          <div *ngIf="teamAnalytics.totalGames === 0" class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            <strong>No Game Data Found</strong><br>
-            This team doesn't have any completed games with scores recorded yet.
+          <!-- No Games Warning -->
+          <div *ngIf="teamAnalytics.totalGames === 0" class="alert alert-warning text-center">
+            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+            <h5>No Game Data Available</h5>
+            <p class="mb-0">This team hasn't played any completed games with recorded scores yet.</p>
           </div>
 
-          <!-- Show analytics if games exist -->
+          <!-- Comprehensive Analytics Display -->
           <div *ngIf="teamAnalytics.totalGames > 0">
-            <!-- Record & Streaks Section -->
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-header bg-primary text-white">
-                    <h6 class="mb-0"><i class="fas fa-home me-1"></i>Home & Away Records</h6>
+            <!-- Key Performance Indicators -->
+            <div class="kpi-section mb-5">
+              <h4 class="section-title">
+                <i class="fas fa-tachometer-alt me-2"></i>Key Performance Indicators
+              </h4>
+              <div class="row">
+                <div class="col-lg-3 col-md-6 mb-3">
+                  <div class="kpi-card offensive">
+                    <div class="kpi-icon">
+                      <i class="fas fa-bullseye"></i>
+                    </div>
+                    <div class="kpi-content">
+                      <div class="kpi-value">{{ formatDecimal(teamAnalytics.avgGoalsPerGame, 2) }}</div>
+                      <div class="kpi-label">Goals Per Game</div>
+                      <div class="kpi-detail">{{ teamAnalytics.goals }} total goals</div>
+                    </div>
                   </div>
-                  <div class="card-body">
-                    <div class="row text-center">
-                      <div class="col-6">
-                        <div class="stat-box">
-                          <div class="stat-label">Home Record</div>
-                          <div class="stat-value text-success">{{ formatRecord(teamAnalytics.homeRecord) }}</div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                  <div class="kpi-card defensive">
+                    <div class="kpi-icon">
+                      <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="kpi-content">
+                      <div class="kpi-value">{{ formatDecimal(teamAnalytics.avgGoalsAgainstPerGame, 2) }}</div>
+                      <div class="kpi-label">Goals Against Per Game</div>
+                      <div class="kpi-detail">{{ teamAnalytics.goalsAgainst }} total against</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                  <div class="kpi-card shooting">
+                    <div class="kpi-icon">
+                      <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="kpi-content">
+                      <div class="kpi-value">{{ formatPercentage(teamAnalytics.shootingPercentage) }}</div>
+                      <div class="kpi-label">Shooting Percentage</div>
+                      <div class="kpi-detail">{{ teamAnalytics.shotAttempts }} shot attempts</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                  <div class="kpi-card faceoff">
+                    <div class="kpi-icon">
+                      <i class="fas fa-dot-circle"></i>
+                    </div>
+                    <div class="kpi-content">
+                      <div class="kpi-value">{{ formatPercentage(teamAnalytics.faceoffPercentage) }}</div>
+                      <div class="kpi-label">Faceoff Percentage</div>
+                      <div class="kpi-detail">{{ teamAnalytics.faceoffsWon }}/{{ teamAnalytics.faceoffsTaken }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Record Analysis -->
+            <div class="analytics-section mb-5">
+              <h4 class="section-title">
+                <i class="fas fa-chart-bar me-2"></i>Record Analysis
+              </h4>
+              <div class="row">
+                <div class="col-lg-4 mb-4">
+                  <div class="analytics-card record-card">
+                    <div class="card-icon">
+                      <i class="fas fa-home"></i>
+                    </div>
+                    <h5>Home Performance</h5>
+                    <div class="record-display">{{ formatRecord(teamAnalytics.homeRecord) }}</div>
+                    <div class="record-breakdown">
+                      <span class="win-stat">{{ teamAnalytics.homeRecord.wins }}W</span>
+                      <span class="loss-stat">{{ teamAnalytics.homeRecord.losses }}L</span>
+                      <span class="otl-stat">{{ teamAnalytics.homeRecord.otl }}OTL</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                  <div class="analytics-card record-card">
+                    <div class="card-icon">
+                      <i class="fas fa-plane"></i>
+                    </div>
+                    <h5>Away Performance</h5>
+                    <div class="record-display">{{ formatRecord(teamAnalytics.awayRecord) }}</div>
+                    <div class="record-breakdown">
+                      <span class="win-stat">{{ teamAnalytics.awayRecord.wins }}W</span>
+                      <span class="loss-stat">{{ teamAnalytics.awayRecord.losses }}L</span>
+                      <span class="otl-stat">{{ teamAnalytics.awayRecord.otl }}OTL</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 mb-4">
+                  <div class="analytics-card streak-card">
+                    <div class="card-icon">
+                      <i class="fas fa-fire"></i>
+                    </div>
+                    <h5>Current Streak</h5>
+                    <div class="streak-display" 
+                         [class.win-streak]="teamAnalytics.currentStreak.type === 'W'"
+                         [class.lose-streak]="teamAnalytics.currentStreak.type === 'L'">
+                      {{ formatStreak(teamAnalytics.currentStreak) }}
+                    </div>
+                    <div class="streak-history">
+                      <small>Longest Win: {{ teamAnalytics.longestWinStreak }}</small>
+                      <small>Longest Loss: {{ teamAnalytics.longestLoseStreak }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Offensive Analytics -->
+            <div class="analytics-section mb-5">
+              <h4 class="section-title">
+                <i class="fas fa-bullseye me-2"></i>Offensive Analytics
+              </h4>
+              <div class="row">
+                <div class="col-lg-8">
+                  <div class="analytics-grid">
+                    <div class="analytics-stat-card goals">
+                      <div class="stat-icon"><i class="fas fa-bullseye"></i></div>
+                      <div class="stat-content">
+                        <div class="stat-number">{{ teamAnalytics.goals }}</div>
+                        <div class="stat-label">Total Goals</div>
+                        <div class="stat-detail">{{ formatDecimal(teamAnalytics.avgGoalsPerGame, 2) }} per game</div>
+                      </div>
+                    </div>
+                    <div class="analytics-stat-card even-strength">
+                      <div class="stat-icon"><i class="fas fa-equals"></i></div>
+                      <div class="stat-content">
+                        <div class="stat-number">{{ teamAnalytics.evenStrengthGoals }}</div>
+                        <div class="stat-label">Even Strength</div>
+                        <div class="stat-detail">{{ ((teamAnalytics.evenStrengthGoals / teamAnalytics.goals) * 100).toFixed(1) }}% of goals</div>
+                      </div>
+                    </div>
+                    <div class="analytics-stat-card shots">
+                      <div class="stat-icon"><i class="fas fa-hockey-puck"></i></div>
+                      <div class="stat-content">
+                        <div class="stat-number">{{ teamAnalytics.shotAttempts }}</div>
+                        <div class="stat-label">Shot Attempts</div>
+                        <div class="stat-detail">{{ formatPercentage(teamAnalytics.shootingPercentage) }} accuracy</div>
+                      </div>
+                    </div>
+                    <div class="analytics-stat-card attack-time">
+                      <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                      <div class="stat-content">
+                        <div class="stat-number">{{ formatTime(teamAnalytics.timeOnAttack) }}</div>
+                        <div class="stat-label">Time on Attack</div>
+                        <div class="stat-detail">{{ formatTime(teamAnalytics.timeOnAttackPerGoal) }} per goal</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="highlight-card offensive-highlight">
+                    <h6><i class="fas fa-trophy me-2"></i>Offensive Highlights</h6>
+                    <div class="highlight-item">
+                      <span class="highlight-label">Most Goals in Game:</span>
+                      <span class="highlight-value">{{ teamAnalytics.mostGoalsInGame }}</span>
+                    </div>
+                    <div class="highlight-item">
+                      <span class="highlight-label">Goals Per Game:</span>
+                      <span class="highlight-value">{{ formatDecimal(teamAnalytics.avgGoalsPerGame, 2) }}</span>
+                    </div>
+                    <div class="highlight-item">
+                      <span class="highlight-label">Shooting Accuracy:</span>
+                      <span class="highlight-value">{{ formatPercentage(teamAnalytics.shootingPercentage) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Defensive Analytics -->
+            <div class="analytics-section mb-5">
+              <h4 class="section-title">
+                <i class="fas fa-shield-alt me-2"></i>Defensive Analytics
+              </h4>
+              <div class="row">
+                <div class="col-lg-8">
+                  <div class="analytics-grid">
+                    <div class="analytics-stat-card goals-against">
+                      <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
+                      <div class="stat-content">
+                        <div class="stat-number">{{ teamAnalytics.goalsAgainst }}</div>
+                        <div class="stat-label">Goals Against</div>
+                        <div class="stat-detail">{{ formatDecimal(teamAnalytics.avgGoalsAgainstPerGame, 2) }} per game</div>
+                      </div>
+                    </div>
+                    <div class="analytics-stat-card shots-against">
+                      <div class="stat-icon"><i class="fas fa-crosshairs"></i></div>
+                      <div class="stat-content">
+                        <div class="stat-number">{{ teamAnalytics.shotsAgainst }}</div>
+                        <div class="stat-label">Shots Against</div>
+                        <div class="stat-detail">{{ formatPercentage(teamAnalytics.goalsAgainstPercentage) }} GA%</div>
+                      </div>
+                    </div>
+                    <div class="analytics-stat-card goal-diff">
+                      <div class="stat-icon">
+                        <i class="fas" [class.fa-arrow-up]="teamAnalytics.goalDifferential > 0" 
+                           [class.fa-arrow-down]="teamAnalytics.goalDifferential < 0"
+                           [class.fa-minus]="teamAnalytics.goalDifferential === 0"></i>
+                      </div>
+                      <div class="stat-content">
+                        <div class="stat-number" 
+                             [class.positive]="teamAnalytics.goalDifferential > 0"
+                             [class.negative]="teamAnalytics.goalDifferential < 0">
+                          {{ teamAnalytics.goalDifferential > 0 ? '+' : '' }}{{ teamAnalytics.goalDifferential }}
+                        </div>
+                        <div class="stat-label">Goal Differential</div>
+                        <div class="stat-detail">{{ teamAnalytics.goals }} GF - {{ teamAnalytics.goalsAgainst }} GA</div>
+                      </div>
+                    </div>
+                    <div class="analytics-stat-card defense-time">
+                      <div class="stat-icon"><i class="fas fa-stopwatch"></i></div>
+                      <div class="stat-content">
+                        <div class="stat-number">{{ formatTime(teamAnalytics.timeOnDefense) }}</div>
+                        <div class="stat-label">Time on Defense</div>
+                        <div class="stat-detail">{{ formatTime(teamAnalytics.timeOnDefensePerGoal) }} per GA</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="highlight-card defensive-highlight">
+                    <h6><i class="fas fa-shield me-2"></i>Defensive Highlights</h6>
+                    <div class="highlight-item">
+                      <span class="highlight-label">Most Goals Against:</span>
+                      <span class="highlight-value">{{ teamAnalytics.mostGoalsAgainstInGame }}</span>
+                    </div>
+                    <div class="highlight-item">
+                      <span class="highlight-label">GA Per Game:</span>
+                      <span class="highlight-value">{{ formatDecimal(teamAnalytics.avgGoalsAgainstPerGame, 2) }}</span>
+                    </div>
+                    <div class="highlight-item">
+                      <span class="highlight-label">Save Percentage:</span>
+                      <span class="highlight-value">{{ formatPercentage(100 - teamAnalytics.goalsAgainstPercentage) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Special Teams & Discipline -->
+            <div class="analytics-section mb-5">
+              <h4 class="section-title">
+                <i class="fas fa-bolt me-2"></i>Special Teams & Discipline
+              </h4>
+              <div class="row">
+                <div class="col-lg-6 mb-4">
+                  <div class="special-teams-card powerplay">
+                    <div class="st-header">
+                      <i class="fas fa-bolt me-2"></i>
+                      <h5>Powerplay Performance</h5>
+                    </div>
+                    <div class="st-stats">
+                      <div class="st-main-stat">
+                        <span class="st-value">{{ formatTime(teamAnalytics.powerplayTimeOnIce) }}</span>
+                        <span class="st-label">Total PP Time</span>
+                      </div>
+                      <div class="st-secondary-stats">
+                        <div class="st-secondary-stat">
+                          <span class="value">{{ teamAnalytics.powerplayTimeOnIce > 0 ? formatDecimal(teamAnalytics.powerplayTimeOnIce / teamAnalytics.totalGames, 1) : '0.0' }}</span>
+                          <span class="label">Avg PP Time/Game</span>
                         </div>
                       </div>
-                      <div class="col-6">
-                        <div class="stat-box">
-                          <div class="stat-label">Away Record</div>
-                          <div class="stat-value text-info">{{ formatRecord(teamAnalytics.awayRecord) }}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                  <div class="special-teams-card penalty-kill">
+                    <div class="st-header">
+                      <i class="fas fa-shield-alt me-2"></i>
+                      <h5>Penalty Kill Performance</h5>
+                    </div>
+                    <div class="st-stats">
+                      <div class="st-main-stat">
+                        <span class="st-value">{{ formatPercentage(teamAnalytics.penaltyKillPercentage) }}</span>
+                        <span class="st-label">PK Success Rate</span>
+                      </div>
+                      <div class="st-secondary-stats">
+                        <div class="st-secondary-stat">
+                          <span class="value">{{ formatPenaltyKills(teamAnalytics.penaltyKills.successful, teamAnalytics.penaltyKills.total) }}</span>
+                          <span class="label">Successful/Total</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-header bg-warning text-dark">
-                    <h6 class="mb-0"><i class="fas fa-fire me-1"></i>Streaks</h6>
-                  </div>
-                  <div class="card-body">
-                    <div class="row text-center">
-                      <div class="col-4">
-                        <div class="stat-box">
-                          <div class="stat-label">Current</div>
-                          <div class="stat-value" 
-                               [class.text-success]="teamAnalytics.currentStreak.type === 'W'"
-                               [class.text-danger]="teamAnalytics.currentStreak.type === 'L'">
-                            {{ formatStreak(teamAnalytics.currentStreak) }}
+            </div>
+
+            <!-- Game Flow Analytics -->
+            <div class="analytics-section mb-5">
+              <h4 class="section-title">
+                <i class="fas fa-chart-line me-2"></i>Game Flow Analytics
+              </h4>
+              <div class="row">
+                <div class="col-lg-6 mb-4">
+                  <div class="flow-card possession">
+                    <h5><i class="fas fa-exchange-alt me-2"></i>Puck Possession</h5>
+                    <div class="flow-stats">
+                      <div class="flow-stat">
+                        <div class="flow-bar">
+                          <div class="flow-fill attack" 
+                               [style.width.%]="(teamAnalytics.timeOnAttack / (teamAnalytics.timeOnAttack + teamAnalytics.timeOnDefense)) * 100">
                           </div>
                         </div>
-                      </div>
-                      <div class="col-4">
-                        <div class="stat-box">
-                          <div class="stat-label">Longest Win</div>
-                          <div class="stat-value text-success">{{ teamAnalytics.longestWinStreak }}</div>
+                        <div class="flow-labels">
+                          <span class="attack-label">Attack: {{ formatTime(teamAnalytics.timeOnAttack) }}</span>
+                          <span class="defense-label">Defense: {{ formatTime(teamAnalytics.timeOnDefense) }}</span>
                         </div>
                       </div>
-                      <div class="col-4">
-                        <div class="stat-box">
-                          <div class="stat-label">Longest Lose</div>
-                          <div class="stat-value text-danger">{{ teamAnalytics.longestLoseStreak }}</div>
-                        </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                  <div class="flow-card efficiency">
+                    <h5><i class="fas fa-target me-2"></i>Efficiency Metrics</h5>
+                    <div class="efficiency-stats">
+                      <div class="efficiency-item">
+                        <span class="eff-label">Attack Time per Goal:</span>
+                        <span class="eff-value">{{ formatTime(teamAnalytics.timeOnAttackPerGoal) }}</span>
+                      </div>
+                      <div class="efficiency-item">
+                        <span class="eff-label">Defense Time per GA:</span>
+                        <span class="eff-value">{{ formatTime(teamAnalytics.timeOnDefensePerGoal) }}</span>
+                      </div>
+                      <div class="efficiency-item">
+                        <span class="eff-label">Passing Accuracy:</span>
+                        <span class="eff-value">{{ formatPercentage(teamAnalytics.passingPercentage) }}</span>
                       </div>
                     </div>
                   </div>
@@ -614,313 +919,135 @@
               </div>
             </div>
 
-            <!-- Offensive Statistics -->
-            <div class="card mb-4">
-              <div class="card-header bg-success text-white">
-                <h6 class="mb-0"><i class="fas fa-bullseye me-1"></i>Offensive Statistics</h6>
-              </div>
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Total Goals</div>
-                      <div class="stat-value">{{ teamAnalytics.goals }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Even Strength Goals</div>
-                      <div class="stat-value">{{ teamAnalytics.evenStrengthGoals }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Most Goals (Game)</div>
-                      <div class="stat-value">{{ teamAnalytics.mostGoalsInGame }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Avg Goals/Game</div>
-                      <div class="stat-value">{{ formatDecimal(teamAnalytics.avgGoalsPerGame) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Shot Attempts</div>
-                      <div class="stat-value">{{ teamAnalytics.shotAttempts }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Shooting %</div>
-                      <div class="stat-value">{{ formatPercentage(teamAnalytics.shootingPercentage) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Time on Attack</div>
-                      <div class="stat-value">{{ formatTime(teamAnalytics.timeOnAttack) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Attack Time/Goal</div>
-                      <div class="stat-value">{{ formatTime(teamAnalytics.timeOnAttackPerGoal) }}</div>
+            <!-- Physical Play & Discipline -->
+            <div class="analytics-section mb-5">
+              <h4 class="section-title">
+                <i class="fas fa-fist-raised me-2"></i>Physical Play & Discipline
+              </h4>
+              <div class="row">
+                <div class="col-lg-4 mb-3">
+                  <div class="physical-card hits">
+                    <div class="physical-icon"><i class="fas fa-fist-raised"></i></div>
+                    <div class="physical-stat">
+                      <div class="physical-number">{{ teamAnalytics.hits }}</div>
+                      <div class="physical-label">Total Hits</div>
+                      <div class="physical-avg">{{ formatDecimal(teamAnalytics.hits / teamAnalytics.totalGames, 1) }} per game</div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- Defensive Statistics -->
-            <div class="card mb-4">
-              <div class="card-header bg-danger text-white">
-                <h6 class="mb-0"><i class="fas fa-shield-alt me-1"></i>Defensive Statistics</h6>
-              </div>
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Goals Against</div>
-                      <div class="stat-value">{{ teamAnalytics.goalsAgainst }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Most GA (Game)</div>
-                      <div class="stat-value">{{ teamAnalytics.mostGoalsAgainstInGame }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Avg GA/Game</div>
-                      <div class="stat-value">{{ formatDecimal(teamAnalytics.avgGoalsAgainstPerGame) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Goal Differential</div>
-                      <div class="stat-value" 
-                           [class.text-success]="teamAnalytics.goalDifferential > 0"
-                           [class.text-danger]="teamAnalytics.goalDifferential < 0">
-                        {{ teamAnalytics.goalDifferential > 0 ? '+' : '' }}{{ teamAnalytics.goalDifferential }}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Shots Against</div>
-                      <div class="stat-value">{{ teamAnalytics.shotsAgainst }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">GA %</div>
-                      <div class="stat-value">{{ formatPercentage(teamAnalytics.goalsAgainstPercentage) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Time on Defense</div>
-                      <div class="stat-value">{{ formatTime(teamAnalytics.timeOnDefense) }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-3 col-6 mb-3">
-                    <div class="stat-box">
-                      <div class="stat-label">Defense Time/GA</div>
-                      <div class="stat-value">{{ formatTime(teamAnalytics.timeOnDefensePerGoal) }}</div>
+                <div class="col-lg-4 mb-3">
+                  <div class="physical-card fights">
+                    <div class="physical-icon"><i class="fas fa-fire"></i></div>
+                    <div class="physical-stat">
+                      <div class="physical-number">{{ teamAnalytics.fights }}</div>
+                      <div class="physical-label">Fights</div>
+                      <div class="physical-avg">{{ formatDecimal(teamAnalytics.fights / teamAnalytics.totalGames, 1) }} per game</div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <!-- General & Special Teams Statistics -->
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-header bg-info text-white">
-                    <h6 class="mb-0"><i class="fas fa-hockey-puck me-1"></i>General Statistics</h6>
-                  </div>
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-6 mb-3">
-                        <div class="stat-box">
-                          <div class="stat-label">Total Games</div>
-                          <div class="stat-value">{{ teamAnalytics.totalGames }}</div>
-                        </div>
-                      </div>
-                      <div class="col-6 mb-3">
-                        <div class="stat-box">
-                          <div class="stat-label">Hits</div>
-                          <div class="stat-value">{{ teamAnalytics.hits }}</div>
-                        </div>
-                      </div>
-                      <div class="col-6 mb-3">
-                        <div class="stat-box">
-                          <div class="stat-label">Passing %</div>
-                          <div class="stat-value">{{ formatPercentage(teamAnalytics.passingPercentage) }}</div>
-                        </div>
-                      </div>
-                      <div class="col-6 mb-3">
-                        <div class="stat-box">
-                          <div class="stat-label">Fights</div>
-                          <div class="stat-value">{{ teamAnalytics.fights }}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="card">
-                  <div class="card-header bg-secondary text-white">
-                    <h6 class="mb-0"><i class="fas fa-bolt me-1"></i>Special Teams</h6>
-                  </div>
-                  <div class="card-body">
-                    <div class="row">
-                      <div class="col-6 mb-3">
-                        <div class="stat-box">
-                          <div class="stat-label">PP Time</div>
-                          <div class="stat-value">{{ formatTime(teamAnalytics.powerplayTimeOnIce) }}</div>
-                        </div>
-                      </div>
-                      <div class="col-6 mb-3">
-                        <div class="stat-box">
-                          <div class="stat-label">Penalty Kills</div>
-                          <div class="stat-value">{{ formatPenaltyKills(teamAnalytics.penaltyKills.successful, teamAnalytics.penaltyKills.total) }}</div>
-                        </div>
-                      </div>
-                      <div class="col-6 mb-3">
-                        <div class="stat-box">
-                          <div class="stat-label">PK %</div>
-                          <div class="stat-value">{{ formatPercentage(teamAnalytics.penaltyKillPercentage) }}</div>
-                        </div>
-                      </div>
-                      <div class="col-6 mb-3">
-                        <div class="stat-box">
-                          <div class="stat-label">Faceoff %</div>
-                          <div class="stat-value">{{ formatPercentage(teamAnalytics.faceoffPercentage) }}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Faceoff Statistics -->
-            <div class="card mb-4">
-              <div class="card-header bg-dark text-white">
-                <h6 class="mb-0"><i class="fas fa-dot-circle me-1"></i>Faceoff Statistics</h6>
-              </div>
-              <div class="card-body">
-                <div class="row text-center">
-                  <div class="col-md-4">
-                    <div class="stat-box">
-                      <div class="stat-label">Faceoffs Taken</div>
-                      <div class="stat-value">{{ teamAnalytics.faceoffsTaken }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="stat-box">
-                      <div class="stat-label">Faceoffs Won</div>
-                      <div class="stat-value">{{ teamAnalytics.faceoffsWon }}</div>
-                    </div>
-                  </div>
-                  <div class="col-md-4">
-                    <div class="stat-box">
-                      <div class="stat-label">Faceoff Percentage</div>
-                      <div class="stat-value">{{ formatPercentage(teamAnalytics.faceoffPercentage) }}</div>
+                <div class="col-lg-4 mb-3">
+                  <div class="physical-card faceoffs">
+                    <div class="physical-icon"><i class="fas fa-dot-circle"></i></div>
+                    <div class="physical-stat">
+                      <div class="physical-number">{{ formatPercentage(teamAnalytics.faceoffPercentage) }}</div>
+                      <div class="physical-label">Faceoff Win %</div>
+                      <div class="physical-avg">{{ teamAnalytics.faceoffsWon }}/{{ teamAnalytics.faceoffsTaken }}</div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        <!-- Team Roster with Season Stats -->
-        <div *ngIf="selectedTeamId && selectedTeamName && teamRoster.length > 0" class="card mt-4">
-          <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">
-              <i class="fas fa-users me-2"></i>{{ selectedTeamName }} - Season Player Stats
-            </h5>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-striped table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Player</th>
-                    <th>Pos</th>
-                    <th>GP</th>
-                    <th>G</th>
-                    <th>A</th>
-                    <th>PTS</th>
-                    <th>+/-</th>
-                    <th>PIM</th>
-                    <th>Shots</th>
-                    <th>S%</th>
-                    <th>Hits</th>
-                    <th>PPG</th>
-                    <th>SHG</th>
-                    <th>TOI</th>
-                    <th *ngIf="hasGoalies()">Saves</th>
-                    <th *ngIf="hasGoalies()">SA</th>
-                    <th *ngIf="hasGoalies()">SV%</th>
-                    <th *ngIf="hasGoalies()">GAA</th>
-                    <th *ngIf="hasGoalies()">SO</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let player of teamRoster">
-                    <td>{{ player.number }}</td>
-                    <td>
-                      <div class="player-info">
-                        <div class="player-name">{{ player.name }}</div>
-                        <small class="text-muted" *ngIf="player.rookie">
-                          <i class="fas fa-star text-warning me-1"></i>Rookie
-                        </small>
-                      </div>
-                    </td>
-                    <td>
-                      <span class="badge position-badge" 
-                            [style.background-color]="getPositionColor(player.position)">
-                        {{ player.position }}
-                      </span>
-                    </td>
-                    <td>{{ player.games }}</td>
-                    <td>{{ player.goals }}</td>
-                    <td>{{ player.assists }}</td>
-                    <td><strong>{{ player.points }}</strong></td>
-                    <td [class.text-success]="player.plusMinus > 0" 
-                        [class.text-danger]="player.plusMinus < 0">
-                      {{ player.plusMinus > 0 ? '+' : '' }}{{ player.plusMinus }}
-                    </td>
-                    <td>{{ player.pim }}</td>
-                    <td>{{ player.shots }}</td>
-                    <td>{{ player.shootingPercentage.toFixed(1) }}%</td>
-                    <td>{{ player.hits }}</td>
-                    <td>{{ player.ppg }}</td>
-                    <td>{{ player.shg }}</td>
-                    <td>{{ formatTimeOnIce(player.timeOnIce) }}</td>
-                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.saves }}</td>
-                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.shotsAgainst }}</td>
-                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.savePercentage.toFixed(1) }}%</td>
-                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.gaa.toFixed(2) }}</td>
-                    <td *ngIf="hasGoalies() && player.position === 'G'">{{ player.shutouts }}</td>
-                    <!-- Empty cells for non-goalies -->
-                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
-                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
-                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
-                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
-                    <td *ngIf="hasGoalies() && player.position !== 'G'">-</td>
-                  </tr>
-                </tbody>
-              </table>
+
+          <!-- Team Roster Section -->
+          <div *ngIf="teamRoster.length > 0" class="roster-section">
+            <h4 class="section-title">
+              <i class="fas fa-users me-2"></i>{{ selectedTeamName }} - Player Statistics
+            </h4>
+            <div class="roster-card">
+              <div class="table-responsive">
+                <table class="table table-hover roster-table">
+                  <thead>
+                    <tr>
+                      <th class="number-col">#</th>
+                      <th class="player-col">Player</th>
+                      <th class="pos-col">Pos</th>
+                      <th class="stat-col">GP</th>
+                      <th class="stat-col">G</th>
+                      <th class="stat-col">A</th>
+                      <th class="stat-col highlight-col">PTS</th>
+                      <th class="stat-col">+/-</th>
+                      <th class="stat-col">PIM</th>
+                      <th class="stat-col">Shots</th>
+                      <th class="stat-col">S%</th>
+                      <th class="stat-col">Hits</th>
+                      <th class="stat-col">PPG</th>
+                      <th class="stat-col">SHG</th>
+                      <th class="stat-col">TOI</th>
+                      <th *ngIf="hasGoalies()" class="stat-col goalie-col">Saves</th>
+                      <th *ngIf="hasGoalies()" class="stat-col goalie-col">SA</th>
+                      <th *ngIf="hasGoalies()" class="stat-col goalie-col">SV%</th>
+                      <th *ngIf="hasGoalies()" class="stat-col goalie-col">GAA</th>
+                      <th *ngIf="hasGoalies()" class="stat-col goalie-col">SO</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let player of teamRoster" class="player-row">
+                      <td class="number-cell">
+                        <span class="jersey-number">#{{ player.number }}</span>
+                      </td>
+                      <td class="player-cell">
+                        <div class="player-info-detailed">
+                          <div class="player-name-main">{{ player.name }}</div>
+                          <div class="player-badges">
+                            <span *ngIf="player.rookie" class="rookie-badge">
+                              <i class="fas fa-star"></i> Rookie
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="pos-cell">
+                        <span class="position-badge-detailed" 
+                              [style.background-color]="getPositionColor(player.position)">
+                          {{ player.position }}
+                        </span>
+                      </td>
+                      <td class="stat-cell">{{ player.games }}</td>
+                      <td class="stat-cell">{{ player.goals }}</td>
+                      <td class="stat-cell">{{ player.assists }}</td>
+                      <td class="stat-cell highlight-cell">
+                        <strong>{{ player.points }}</strong>
+                      </td>
+                      <td class="stat-cell" 
+                          [class.positive-stat]="player.plusMinus > 0" 
+                          [class.negative-stat]="player.plusMinus < 0">
+                        {{ player.plusMinus > 0 ? '+' : '' }}{{ player.plusMinus }}
+                      </td>
+                      <td class="stat-cell">{{ player.pim }}</td>
+                      <td class="stat-cell">{{ player.shots }}</td>
+                      <td class="stat-cell">{{ player.shootingPercentage.toFixed(1) }}%</td>
+                      <td class="stat-cell">{{ player.hits }}</td>
+                      <td class="stat-cell">{{ player.ppg }}</td>
+                      <td class="stat-cell">{{ player.shg }}</td>
+                      <td class="stat-cell">{{ formatTimeOnIce(player.timeOnIce) }}</td>
+                      
+                      <!-- Goalie Stats -->
+                      <td *ngIf="hasGoalies() && player.position === 'G'" class="stat-cell goalie-stat">{{ player.saves }}</td>
+                      <td *ngIf="hasGoalies() && player.position === 'G'" class="stat-cell goalie-stat">{{ player.shotsAgainst }}</td>
+                      <td *ngIf="hasGoalies() && player.position === 'G'" class="stat-cell goalie-stat">{{ player.savePercentage.toFixed(1) }}%</td>
+                      <td *ngIf="hasGoalies() && player.position === 'G'" class="stat-cell goalie-stat">{{ player.gaa.toFixed(2) }}</td>
+                      <td *ngIf="hasGoalies() && player.position === 'G'" class="stat-cell goalie-stat">{{ player.shutouts }}</td>
+                      
+                      <!-- Empty cells for non-goalies when goalies exist -->
+                      <td *ngIf="hasGoalies() && player.position !== 'G'" class="stat-cell empty-goalie-stat">-</td>
+                      <td *ngIf="hasGoalies() && player.position !== 'G'" class="stat-cell empty-goalie-stat">-</td>
+                      <td *ngIf="hasGoalies() && player.position !== 'G'" class="stat-cell empty-goalie-stat">-</td>
+                      <td *ngIf="hasGoalies() && player.position !== 'G'" class="stat-cell empty-goalie-stat">-</td>
+                      <td *ngIf="hasGoalies() && player.position !== 'G'" class="stat-cell empty-goalie-stat">-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
