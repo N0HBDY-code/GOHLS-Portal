@@ -189,7 +189,9 @@ export class GameDetail implements OnInit {
         shg: gameStats.shg || 0,
         fot: fot,
         fow: fow,
-        foPercentage: fot > 0 ? (fow / fot) * 100 : 0
+        foPercentage: fot > 0 ? (fow / fot) * 100 : 0,
+        minutes: gameStats.minutes || 0,
+        seconds: gameStats.seconds || 0
       };
     }).sort((a, b) => a.number - b.number);
 
@@ -220,7 +222,9 @@ export class GameDetail implements OnInit {
         shg: gameStats.shg || 0,
         fot: fot,
         fow: fow,
-        foPercentage: fot > 0 ? (fow / fot) * 100 : 0
+        foPercentage: fot > 0 ? (fow / fot) * 100 : 0,
+        minutes: gameStats.minutes || 0,
+        seconds: gameStats.seconds || 0
       };
     }).sort((a, b) => a.number - b.number);
   }
