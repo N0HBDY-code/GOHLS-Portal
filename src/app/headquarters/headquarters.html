@@ -350,7 +350,6 @@
                   </div>
                   <div>
                     <div class="fw-bold">{{ user.displayName }}</div>
-                    <small class="text-muted">{{ user.email }}</small>
                   </div>
                 </div>
               </div>
@@ -365,7 +364,6 @@
           <div *ngIf="selectedUser" class="card mt-3">
             <div class="card-body">
               <h6>User: {{ selectedUser.displayName }}</h6>
-              <p class="text-muted mb-3">Email: {{ selectedUser.email }}</p>
 
               <!-- Current Roles -->
               <div class="mb-3">
@@ -662,7 +660,6 @@
           
           <div class="mb-3">
             <h6>User: {{ selectedUserForGm.displayName }}</h6>
-            <p class="text-muted mb-0">{{ selectedUserForGm.email }}</p>
           </div>
 
           <div class="mb-3">
@@ -671,16 +668,9 @@
             </label>
             <select class="form-select" [(ngModel)]="selectedTeamForGm">
               <option value="">-- Choose a Team --</option>
-              <optgroup label="Major League">
-                <option *ngFor="let team of majorLeagueTeamsFiltered" [value]="team.id">
-                  {{ team.name }}
-                </option>
-              </optgroup>
-              <optgroup label="Minor League">
-                <option *ngFor="let team of minorLeagueTeamsFiltered" [value]="team.id">
-                  {{ team.name }}
-                </option>
-              </optgroup>
+              <option *ngFor="let team of allTeamsSorted" [value]="team.id">
+                {{ team.name }}
+              </option>
             </select>
           </div>
 

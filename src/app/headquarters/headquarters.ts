@@ -155,7 +155,7 @@ export class Headquarters implements OnInit {
       this.loadNewPlayers(),
       this.loadTeams(),
       this.loadPendingPlayers(),
-      this.loadTeams()
+       this.loadAllTeams()
     ]);
   }
 
@@ -962,6 +962,32 @@ export class Headquarters implements OnInit {
 
   get minorLeagueTeamsFiltered(): Team[] {
     return this.allTeams.filter(t => (t.league || '') === 'minor');
+  }
+
+  get allTeamsSorted(): Team[] {
+    return [...this.allTeams].sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async loadAllTeams() {
+    try {
+      const teamsRef = collection(this.firestore, 'teams');
+      const snapshot = await getDocs(teamsRef);
+      
+      this.allTeams = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: `${data['city']} ${data['mascot']}`,
+          city: data['city'],
+          mascot: data['mascot'],
+          league: data['league'] || 'major',
+          conference: data['conference'],
+          division: data['division']
+        };
+      });
+    } catch (error) {
+      console.error('Error loading all teams:', error);
+    }
   }
 
   formatRoleDisplay(role: string): string {
