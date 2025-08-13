@@ -12,8 +12,8 @@ import { Subscription } from 'rxjs';
       <button 
         class="theme-toggle-btn"
         [attr.aria-label]="getAriaLabel()"
-        [attr.aria-pressed]="currentTheme === 'dark'"
-        (click)="toggleTheme()"
+        [attr.aria-expanded]="showOptions"
+        (click)="toggleOptions()"
         type="button">
         
         <!-- Light Mode Icon -->
@@ -53,12 +53,13 @@ import { Subscription } from 'rxjs';
              stroke-linecap="round" 
              stroke-linejoin="round"
              aria-hidden="true">
-          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-          <line x1="8" y1="21" x2="16" y2="21"/>
-          <line x1="12" y1="17" x2="12" y2="21"/>
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v6M12 17v6M5.64 5.64l4.24 4.24M14.12 14.12l4.24 4.24M1 12h6M17 12h6M5.64 18.36l4.24-4.24M14.12 9.88l4.24-4.24"/>
+          <path d="M12 1v2M12 21v2" opacity="0.5"/>
         </svg>
 
-        <span class="theme-label">{{ getThemeLabel() }}</span>
+        <span class="theme-label d-none d-md-inline">{{ getThemeLabel() }}</span>
+        <i class="fas fa-chevron-down ms-1 dropdown-arrow" [class.rotated]="showOptions"></i>
       </button>
 
       <!-- Theme Options Dropdown -->
@@ -91,7 +92,7 @@ import { Subscription } from 'rxjs';
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: var(--bs-body-bg);
+      background: transparent;
       border: 2px solid var(--bs-border-color);
       border-radius: 8px;
       padding: 0.5rem 1rem;
@@ -100,7 +101,7 @@ import { Subscription } from 'rxjs';
       transition: all 0.2s ease;
       font-size: 0.875rem;
       font-weight: 500;
-      min-width: 120px;
+      min-width: 100px;
     }
 
     .theme-toggle-btn:hover {
@@ -112,6 +113,15 @@ import { Subscription } from 'rxjs';
     .theme-toggle-btn:focus {
       outline: 2px solid var(--bs-primary);
       outline-offset: 2px;
+    }
+
+    .dropdown-arrow {
+      font-size: 0.75rem;
+      transition: transform 0.2s ease;
+    }
+
+    .dropdown-arrow.rotated {
+      transform: rotate(180deg);
     }
 
     .theme-icon {
@@ -182,11 +192,11 @@ import { Subscription } from 'rxjs';
 
     @media (max-width: 768px) {
       .theme-toggle-btn {
-        min-width: 100px;
+        min-width: 50px;
         padding: 0.375rem 0.75rem;
       }
       
-      .theme-label {
+      .dropdown-arrow {
         display: none;
       }
     }
@@ -219,7 +229,7 @@ export class ThemeToggleComponent implements OnInit, OnDestroy {
     document.removeEventListener('click', this.handleOutsideClick.bind(this));
   }
 
-  toggleTheme(): void {
+  toggleOptions(): void {
     this.showOptions = !this.showOptions;
   }
 
