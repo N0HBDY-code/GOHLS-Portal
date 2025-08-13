@@ -16,6 +16,13 @@
       </li>
       <li class="nav-item">
         <a class="nav-link" 
+           [class.active]="currentView === 'playerstats'"
+           (click)="currentView = 'playerstats'; loadPlayerStats()">
+          <i class="fas fa-users me-1"></i> Player Stats
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" 
            [class.active]="currentView === 'analytics'"
            (click)="currentView = 'analytics'">
           <i class="fas fa-chart-line me-1"></i> Team Analytics
@@ -352,6 +359,160 @@
         Data cached for faster loading • 
         <button class="btn btn-link btn-sm p-0" (click)="clearCache()">Clear cache</button>
       </small>
+    </div>
+  </div>
+
+  <!-- Player Stats View -->
+  <div *ngIf="currentView === 'playerstats'">
+    <!-- Category Selection -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fas fa-users me-2"></i>Player Statistics Leaders
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row align-items-center mb-3">
+          <div class="col-md-8">
+            <label class="form-label">Select Category</label>
+            <select class="form-select" 
+                    [(ngModel)]="playerStatsView" 
+                    (change)="onPlayerStatsViewChange()">
+              <option *ngFor="let category of playerStatsCategories" [value]="category.key">
+                {{ category.label }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="form-check form-switch mt-4">
+              <input class="form-check-input" 
+                     type="checkbox" 
+                     id="rookieFilter"
+                     [(ngModel)]="showRookieOnly"
+                     (change)="onRookieFilterChange()">
+              <label class="form-check-label" for="rookieFilter">
+                <i class="fas fa-graduation-cap me-1"></i>Rookies Only
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Loading Indicator -->
+        <div *ngIf="loadingPlayerStats" class="text-center py-4">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading player stats...</span>
+          </div>
+        </div>
+        
+        <!-- Player Stats Table -->
+        <div *ngIf="!loadingPlayerStats" class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Team</th>
+                <th>Position</th>
+                <th>GP</th>
+                <th>{{ getCurrentCategoryLabel() }}</th>
+                <th *ngIf="playerStatsView === 'goals' || playerStatsView === 'assists' || playerStatsView === 'points'">G</th>
+                <th *ngIf="playerStatsView === 'goals' || playerStatsView === 'assists' || playerStatsView === 'points'">A</th>
+                <th *ngIf="playerStatsView === 'goals' || playerStatsView === 'assists' || playerStatsView === 'points'">PTS</th>
+                <th *ngIf="playerStatsView === 'saves' || playerStatsView === 'savepct' || playerStatsView === 'shutouts' || playerStatsView === 'gaa'">Saves</th>
+                <th *ngIf="playerStatsView === 'saves' || playerStatsView === 'savepct' || playerStatsView === 'shutouts' || playerStatsView === 'gaa'">SA</th>
+                <th *ngIf="showRookieOnly">Age</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let player of getPaginatedPlayerStats(); let i = index">
+                <td>
+                  <span class="rank-badge">{{ (playerStatsPage * playersPerPage) + i + 1 }}</span>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="player-info">
+                      <div class="player-name">{{ player.name }}</div>
+                      <small class="text-muted" *ngIf="player.rookie">
+                        <i class="fas fa-star text-warning me-1"></i>Rookie
+                      </small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <img *ngIf="player.teamLogo" 
+                         [src]="player.teamLogo" 
+                         [alt]="player.teamName"
+                         class="team-logo-small me-2">
+                    <span class="team-name-small">{{ player.teamName }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge position-badge" 
+                        [style.background-color]="getPositionColor(player.position)">
+                    {{ player.position }}
+                  </span>
+                </td>
+                <td>{{ player.games }}</td>
+                <td class="stat-highlight">
+                  <strong>{{ getStatValue(player, playerStatsView) }}</strong>
+                </td>
+                <td *ngIf="playerStatsView === 'goals' || playerStatsView === 'assists' || playerStatsView === 'points'">
+                  {{ player.goals }}
+                </td>
+                <td *ngIf="playerStatsView === 'goals' || playerStatsView === 'assists' || playerStatsView === 'points'">
+                  {{ player.assists }}
+                </td>
+                <td *ngIf="playerStatsView === 'goals' || playerStatsView === 'assists' || playerStatsView === 'points'">
+                  {{ player.points }}
+                </td>
+                <td *ngIf="playerStatsView === 'saves' || playerStatsView === 'savepct' || playerStatsView === 'shutouts' || playerStatsView === 'gaa'">
+                  {{ player.saves }}
+                </td>
+                <td *ngIf="playerStatsView === 'saves' || playerStatsView === 'savepct' || playerStatsView === 'shutouts' || playerStatsView === 'gaa'">
+                  {{ player.shotsAgainst }}
+                </td>
+                <td *ngIf="showRookieOnly">{{ player.age }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div *ngIf="!loadingPlayerStats && getFilteredPlayerStats().length > playersPerPage" 
+             class="d-flex justify-content-between align-items-center mt-3">
+          <div>
+            <small class="text-muted">
+              Showing {{ (playerStatsPage * playersPerPage) + 1 }} - 
+              {{ Math.min((playerStatsPage + 1) * playersPerPage, getFilteredPlayerStats().length) }} 
+              of {{ getFilteredPlayerStats().length }} players
+            </small>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-outline-secondary btn-sm" 
+                    (click)="previousPlayerStatsPage()"
+                    [disabled]="playerStatsPage === 0">
+              <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <span class="btn btn-outline-secondary btn-sm disabled">
+              Page {{ playerStatsPage + 1 }} of {{ getTotalPlayerStatsPages() }}
+            </span>
+            <button class="btn btn-outline-secondary btn-sm" 
+                    (click)="nextPlayerStatsPage()"
+                    [disabled]="playerStatsPage >= getTotalPlayerStatsPages() - 1">
+              Next <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- No Data Message -->
+        <div *ngIf="!loadingPlayerStats && getFilteredPlayerStats().length === 0" 
+             class="text-center py-4 text-muted">
+          <i class="fas fa-chart-line fa-3x mb-3"></i>
+          <h5>No Player Stats Available</h5>
+          <p>{{ showRookieOnly ? 'No rookie players found with stats' : 'No players found with stats for this category' }}</p>
+        </div>
+      </div>
     </div>
   </div>
 
