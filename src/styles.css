@@ -462,6 +462,65 @@ p, span, div, label {
   color: var(--bs-secondary-color) !important;
 }
 
+/* Fix dashboard game display theming */
+.games-carousel-container {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.game-card-single {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.game-header {
+  color: var(--bs-body-color) !important;
+}
+
+.teams-container {
+  color: var(--bs-body-color) !important;
+}
+
+.team-display {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.away-score,
+.home-score {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-emphasis-color) !important;
+}
+
+.score-separator {
+  color: var(--bs-secondary-color) !important;
+}
+
+.carousel-btn {
+  background: rgba(var(--bs-secondary-rgb), 0.8) !important;
+  color: var(--bs-body-bg) !important;
+}
+
+.carousel-btn:hover {
+  background: rgba(var(--bs-secondary-rgb), 1) !important;
+}
+
+.indicator-dot {
+  background: var(--bs-border-color) !important;
+}
+
+.indicator-dot.active {
+  background: var(--bs-primary) !important;
+}
+
+.indicator-dot:hover {
+  background: var(--bs-secondary) !important;
+}
+
 /* Fix player avatar */
 .user-avatar {
   background-color: var(--bs-success) !important;
@@ -472,6 +531,209 @@ p, span, div, label {
 .bg-white {
   background-color: var(--bs-body-bg) !important;
   color: var(--bs-body-color) !important;
+}
+
+/* Fix conference headers in standings */
+.text-primary {
+  color: var(--bs-primary) !important;
+}
+
+h4.text-primary,
+h5.text-primary {
+  color: var(--bs-primary) !important;
+  font-weight: 600;
+}
+
+/* Fix player page form styling */
+.card.shadow-lg {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.card-header.bg-primary {
+  background: linear-gradient(45deg, var(--bs-primary), #6610f2) !important;
+  color: white !important;
+}
+
+.alert-info {
+  background-color: var(--bs-info-bg-subtle) !important;
+  border-color: var(--bs-info) !important;
+  color: var(--bs-emphasis-color) !important;
+}
+
+.alert-warning {
+  background-color: var(--bs-warning-bg-subtle) !important;
+  border-color: var(--bs-warning) !important;
+  color: var(--bs-emphasis-color) !important;
+}
+
+/* Fix player manager styling */
+.player-header {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.player-avatar {
+  background: var(--bs-primary) !important;
+  color: white !important;
+}
+
+.player-name {
+  color: var(--bs-emphasis-color) !important;
+}
+
+.team-display {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.team-name-text {
+  color: var(--bs-body-color) !important;
+}
+
+.stat-card,
+.training-section,
+.attributes-section-full {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.stat-item {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.stat-label {
+  color: var(--bs-secondary-color) !important;
+}
+
+.stat-value {
+  color: var(--bs-emphasis-color) !important;
+}
+
+.attributes-title {
+  color: var(--bs-emphasis-color) !important;
+}
+
+.training-title {
+  color: var(--bs-emphasis-color) !important;
+}
+
+.attribute-value {
+  color: var(--bs-emphasis-color) !important;
+}
+
+.training-legend {
+  background-color: var(--bs-tertiary-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.legend-badge {
+  background: var(--bs-success) !important;
+  color: white !important;
+}
+
+.legend-badge.bg-success {
+  background: var(--bs-success) !important;
+  color: white !important;
+}
+
+/* Fix timeline and history items */
+.timeline-item {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-primary) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.team-history-item {
+  background-color: var(--bs-body-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* Fix pending player display */
+.team-badge {
+  color: var(--bs-emphasis-color) !important;
+}
+
+.team-badge.bg-warning {
+  background-color: var(--bs-warning) !important;
+  color: var(--bs-dark) !important;
+}
+
+/* Fix all remaining white text on white background issues */
+.loading-container {
+  color: var(--bs-body-color) !important;
+}
+
+.spinner-border {
+  color: var(--bs-primary) !important;
+}
+
+/* Fix form labels and text */
+.form-label {
+  color: var(--bs-emphasis-color) !important;
+  font-weight: 600;
+}
+
+.form-text {
+  color: var(--bs-secondary-color) !important;
+}
+
+/* Fix all badge text visibility */
+.badge.bg-info {
+  background-color: var(--bs-info) !important;
+  color: var(--bs-dark) !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--bs-warning) !important;
+  color: var(--bs-dark) !important;
+}
+
+.badge.bg-success {
+  background-color: var(--bs-success) !important;
+  color: white !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--bs-danger) !important;
+  color: white !important;
+}
+
+.badge.bg-primary {
+  background-color: var(--bs-primary) !important;
+  color: white !important;
+}
+
+.badge.bg-secondary {
+  background-color: var(--bs-secondary) !important;
+  color: white !important;
+}
+
+/* Fix small text elements */
+small,
+.small {
+  color: var(--bs-secondary-color) !important;
+}
+
+/* Fix list items */
+li {
+  color: var(--bs-body-color) !important;
+}
+
+/* Fix any remaining text visibility issues */
+p {
+  color: var(--bs-body-color) !important;
+}
+
+strong {
+  color: var(--bs-emphasis-color) !important;
 }
 
 /* Ensure all custom components respect theme */
